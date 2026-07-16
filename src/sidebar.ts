@@ -1,0 +1,342 @@
+import { MarkEdit } from 'markedit-api';
+import { extractHeadings, activeHeadingIndex, type Heading } from './toc';
+import { goToHeading } from './navigation';
+import { CSS, STYLE_ELEMENT_ID } from './styles';
+import { OUTLINE_ICON } from './icons';
+import type { OutlineSettings } from './settings';
+
+export class OutlineSidebar {
+  private readonly settings: OutlineSettings;
+
+  private mounted = false;
+  private opened = false;
+
+  private root!: HTMLElement;
+  private list!: HTMLElement;
+  private empty!: HTMLElement;
+  private toggleButton?: HTMLElement;
+
+  private headings: Heading[] = [];
+  private items: HTMLElement[] = [];
+  private activeIndex = -1;
+
+  constructor(settings: OutlineSettings) {
+    this.settings = settings;
+  }
+
+  /** Build the DOM and attach it to the document. Safe to call more than once. */
+  mount(): void {
+    if (this.mounted) {
+      return;
+    }
+    this.mounted = true;
+
+    this.injectStyles();
+    this.buildSidebar();
+    if (this.settings.showToggleButton) {
+      this.buildToggleButton();
+    }
+
+    this.applyTheme();
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => this.applyTheme());
+  }
+
+  isOpen(): boolean {
+    return this.opened;
+  }
+
+  open(): void {
+    if (!this.mounted || this.opened) {
+      return;
+    }
+    this.opened = true;
+    this.applyTheme();
+    this.refresh();
+    this.root.classList.add('meo-open');
+    this.pushEditor(true);
+    this.positionToggleButton();
+  }
+
+  close(): void {
+    if (!this.mounted || !this.opened) {
+      return;
+    }
+    this.opened = false;
+    this.root.classList.remove('meo-open');
+    this.pushEditor(false);
+    this.positionToggleButton();
+  }
+
+  toggle(): void {
+    if (this.opened) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+
+  /** Recompute the table of contents and re-render the list. */
+  refresh(): void {
+    if (!this.mounted) {
+      return;
+    }
+
+    // Only pay for parsing / rendering when the panel is actually visible.
+    if (!this.opened) {
+      return;
+    }
+
+    this.headings = extractHeadings(MarkEdit.editorView.state);
+    this.renderList();
+    this.updateActive();
+  }
+
+  /** Update which item is highlighted based on the current caret position. */
+  updateActive(): void {
+    if (!this.mounted || !this.opened || this.items.length === 0) {
+      return;
+    }
+
+    const head = MarkEdit.editorView.state.selection.main.head;
+    const next = activeHeadingIndex(this.headings, head);
+    if (next === this.activeIndex) {
+      return;
+    }
+
+    if (this.activeIndex >= 0 && this.items[this.activeIndex]) {
+      this.items[this.activeIndex].classList.remove('meo-active');
+    }
+    this.activeIndex = next;
+    if (next >= 0 && this.items[next]) {
+      this.items[next].classList.add('meo-active');
+      this.ensureItemVisible(this.items[next]);
+    }
+  }
+
+  // MARK: - DOM construction
+
+  private injectStyles(): void {
+    if (document.getElementById(STYLE_ELEMENT_ID)) {
+      return;
+    }
+    const style = document.createElement('style');
+    style.id = STYLE_ELEMENT_ID;
+    style.textContent = CSS;
+    document.head.appendChild(style);
+  }
+
+  private buildSidebar(): void {
+    const root = document.createElement('div');
+    root.className = 'meo-sidebar';
+    root.setAttribute('data-position', this.settings.position);
+    root.style.setProperty('--meo-width', `${this.settings.width}px`);
+    root.style.width = `${this.settings.width}px`;
+
+    const header = document.createElement('div');
+    header.className = 'meo-header';
+
+    const title = document.createElement('span');
+    title.className = 'meo-title';
+    title.textContent = 'Outline';
+
+    const close = document.createElement('button');
+    close.className = 'meo-close';
+    close.title = 'Hide Outline';
+    close.setAttribute('aria-label', 'Hide Outline');
+    close.textContent = '✕'; // ✕
+    close.addEventListener('click', () => this.close());
+
+    header.append(title, close);
+
+    const list = document.createElement('div');
+    list.className = 'meo-list';
+    list.setAttribute('role', 'tree');
+    list.addEventListener('click', (event) => this.onListClick(event));
+
+    const empty = document.createElement('div');
+    empty.className = 'meo-empty';
+    empty.textContent = 'No headings in this document.';
+    empty.style.display = 'none';
+
+    root.append(header, list, empty);
+    document.body.appendChild(root);
+
+    this.root = root;
+    this.list = list;
+    this.empty = empty;
+  }
+
+  private buildToggleButton(): void {
+    const button = document.createElement('button');
+    button.className = 'meo-toggle';
+    button.title = 'Toggle Outline Sidebar';
+    button.setAttribute('aria-label', 'Toggle Outline Sidebar');
+    button.innerHTML = OUTLINE_ICON;
+    button.addEventListener('click', () => this.toggle());
+    document.body.appendChild(button);
+
+    this.toggleButton = button;
+    this.positionToggleButton();
+  }
+
+  // MARK: - Rendering
+
+  private renderList(): void {
+    this.list.textContent = '';
+    this.items = [];
+    this.activeIndex = -1;
+
+    if (this.headings.length === 0) {
+      this.empty.style.display = '';
+      return;
+    }
+    this.empty.style.display = 'none';
+
+    const fragment = document.createDocumentFragment();
+    this.headings.forEach((heading, index) => {
+      const item = document.createElement('button');
+      item.className = 'meo-item';
+      item.setAttribute('data-level', String(heading.level));
+      item.setAttribute('data-index', String(index));
+      item.title = heading.title;
+      item.textContent = heading.title;
+      this.items.push(item);
+      fragment.appendChild(item);
+    });
+    this.list.appendChild(fragment);
+  }
+
+  private onListClick(event: MouseEvent): void {
+    const target = (event.target as HTMLElement | null)?.closest('.meo-item') as HTMLElement | null;
+    if (target === null) {
+      return;
+    }
+    const index = parseInt(target.getAttribute('data-index') ?? '', 10);
+    if (Number.isNaN(index)) {
+      return;
+    }
+    goToHeading(this.headings, index, this.settings.syncPreviewScroll);
+  }
+
+  private ensureItemVisible(item: HTMLElement): void {
+    const listTop = this.list.scrollTop;
+    const listBottom = listTop + this.list.clientHeight;
+    const itemTop = item.offsetTop - this.list.offsetTop;
+    const itemBottom = itemTop + item.offsetHeight;
+
+    if (itemTop < listTop) {
+      this.list.scrollTop = itemTop - 4;
+    } else if (itemBottom > listBottom) {
+      this.list.scrollTop = itemBottom - this.list.clientHeight + 4;
+    }
+  }
+
+  // MARK: - Layout & theming
+
+  private pushEditor(open: boolean): void {
+    if (!this.settings.pushEditor) {
+      return;
+    }
+
+    const width = this.settings.width;
+    const right = this.settings.position === 'right';
+    const body = document.body.style;
+    const root = document.documentElement.style;
+
+    if (open) {
+      // 1. Shrink the content container. In edit / side-by-side modes the
+      //    editor and preview live in a CSS grid on <body>; constraining the
+      //    body width reflows that grid into the space beside the panel.
+      body.width = `calc(100vw - ${width}px)`;
+      body.marginLeft = right ? '' : `${width}px`;
+      body.marginRight = '';
+      // 2. In pure preview mode the preview pane is absolutely positioned and
+      //    ignores the body box; MarkEdit-preview exposes this CSS variable to
+      //    inset that overlay, so we reserve the panel's edge here too.
+      root.setProperty('--markedit-content-inset', right ? `0 ${width}px 0 0` : `0 0 0 ${width}px`);
+    } else {
+      body.width = '';
+      body.marginLeft = '';
+      body.marginRight = '';
+      root.removeProperty('--markedit-content-inset');
+    }
+
+    // Let CodeMirror re-measure so text reflows within the new width.
+    MarkEdit.editorView.requestMeasure();
+  }
+
+  private positionToggleButton(): void {
+    if (this.toggleButton === undefined) {
+      return;
+    }
+    const offset = this.opened ? this.settings.width + 8 : 8;
+    if (this.settings.position === 'right') {
+      this.toggleButton.style.right = `${offset}px`;
+      this.toggleButton.style.left = '';
+    } else {
+      this.toggleButton.style.left = `${offset}px`;
+      this.toggleButton.style.right = '';
+    }
+  }
+
+  /** Pull colors from the live editor theme so the panel matches it. */
+  private applyTheme(): void {
+    if (!this.mounted) {
+      return;
+    }
+
+    const view = MarkEdit.editorView;
+    const editorStyle = getComputedStyle(view.dom);
+    const contentStyle = getComputedStyle(view.contentDOM ?? view.dom);
+
+    const bg = firstOpaqueColor([editorStyle.backgroundColor, getComputedStyle(document.body).backgroundColor]) ?? '#ffffff';
+    const fg = firstOpaqueColor([contentStyle.color, editorStyle.color]) ?? '#1a1a1a';
+    const dark = isDarkColor(bg);
+
+    const set = (name: string, value: string) => this.root.style.setProperty(name, value);
+    set('--meo-bg', bg);
+    set('--meo-fg', fg);
+    set('--meo-border', dark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.12)');
+    set('--meo-hover', dark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)');
+    set('--meo-active-bg', dark ? 'rgba(255, 255, 255, 0.13)' : 'rgba(0, 0, 0, 0.06)');
+    set('--meo-accent', 'AccentColor');
+
+    if (this.toggleButton !== undefined) {
+      this.toggleButton.style.setProperty('--meo-bg', bg);
+      this.toggleButton.style.setProperty('--meo-fg', fg);
+      this.toggleButton.style.setProperty('--meo-border', dark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.12)');
+    }
+  }
+}
+
+function firstOpaqueColor(candidates: string[]): string | undefined {
+  for (const color of candidates) {
+    const rgb = parseColor(color);
+    if (rgb !== undefined && rgb.a > 0.05) {
+      return color;
+    }
+  }
+  return undefined;
+}
+
+function isDarkColor(color: string): boolean {
+  const rgb = parseColor(color);
+  if (rgb === undefined) {
+    return matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  // Perceived luminance (ITU-R BT.601).
+  const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  return luminance < 0.5;
+}
+
+function parseColor(color: string): { r: number; g: number; b: number; a: number } | undefined {
+  const match = /rgba?\(([^)]+)\)/.exec(color);
+  if (match === null) {
+    return undefined;
+  }
+  const parts = match[1].split(',').map((p) => parseFloat(p.trim()));
+  if (parts.length < 3 || parts.some((n) => Number.isNaN(n))) {
+    return undefined;
+  }
+  return { r: parts[0], g: parts[1], b: parts[2], a: parts.length >= 4 ? parts[3] : 1 };
+}
