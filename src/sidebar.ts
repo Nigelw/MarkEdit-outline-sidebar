@@ -2,7 +2,6 @@ import { MarkEdit } from 'markedit-api';
 import { extractHeadings, activeHeadingIndex, type Heading } from './toc';
 import { goToHeading } from './navigation';
 import { CSS, STYLE_ELEMENT_ID } from './styles';
-import { OUTLINE_ICON } from './icons';
 import type { OutlineSettings } from './settings';
 
 export class OutlineSidebar {
@@ -14,7 +13,6 @@ export class OutlineSidebar {
   private root!: HTMLElement;
   private list!: HTMLElement;
   private empty!: HTMLElement;
-  private toggleButton?: HTMLElement;
 
   private headings: Heading[] = [];
   private items: HTMLElement[] = [];
@@ -33,9 +31,6 @@ export class OutlineSidebar {
 
     this.injectStyles();
     this.buildSidebar();
-    if (this.settings.showToggleButton) {
-      this.buildToggleButton();
-    }
 
     this.applyTheme();
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => this.applyTheme());
@@ -54,7 +49,6 @@ export class OutlineSidebar {
     this.refresh();
     this.root.classList.add('meo-open');
     this.pushEditor(true);
-    this.positionToggleButton();
   }
 
   close(): void {
@@ -64,7 +58,6 @@ export class OutlineSidebar {
     this.opened = false;
     this.root.classList.remove('meo-open');
     this.pushEditor(false);
-    this.positionToggleButton();
   }
 
   toggle(): void {
@@ -166,19 +159,6 @@ export class OutlineSidebar {
     this.empty = empty;
   }
 
-  private buildToggleButton(): void {
-    const button = document.createElement('button');
-    button.className = 'meo-toggle';
-    button.title = 'Toggle Outline Sidebar';
-    button.setAttribute('aria-label', 'Toggle Outline Sidebar');
-    button.innerHTML = OUTLINE_ICON;
-    button.addEventListener('click', () => this.toggle());
-    document.body.appendChild(button);
-
-    this.toggleButton = button;
-    this.positionToggleButton();
-  }
-
   // MARK: - Rendering
 
   private renderList(): void {
@@ -265,20 +245,6 @@ export class OutlineSidebar {
     MarkEdit.editorView.requestMeasure();
   }
 
-  private positionToggleButton(): void {
-    if (this.toggleButton === undefined) {
-      return;
-    }
-    const offset = this.opened ? this.settings.width + 8 : 8;
-    if (this.settings.position === 'right') {
-      this.toggleButton.style.right = `${offset}px`;
-      this.toggleButton.style.left = '';
-    } else {
-      this.toggleButton.style.left = `${offset}px`;
-      this.toggleButton.style.right = '';
-    }
-  }
-
   /** Pull colors from the live editor theme so the panel matches it. */
   private applyTheme(): void {
     if (!this.mounted) {
@@ -300,12 +266,6 @@ export class OutlineSidebar {
     set('--meo-hover', dark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)');
     set('--meo-active-bg', dark ? 'rgba(255, 255, 255, 0.13)' : 'rgba(0, 0, 0, 0.06)');
     set('--meo-accent', 'AccentColor');
-
-    if (this.toggleButton !== undefined) {
-      this.toggleButton.style.setProperty('--meo-bg', bg);
-      this.toggleButton.style.setProperty('--meo-fg', fg);
-      this.toggleButton.style.setProperty('--meo-border', dark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.12)');
-    }
   }
 }
 

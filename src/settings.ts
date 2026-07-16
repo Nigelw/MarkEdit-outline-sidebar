@@ -14,9 +14,7 @@ export interface OutlineSettings {
   width: number;
   /** Open the sidebar automatically when a document opens. */
   openByDefault: boolean;
-  /** Show the floating toggle button inside the editor. */
-  showToggleButton: boolean;
-  /** Shrink the editor when the sidebar is open so text is never hidden behind it. */
+  /** Shrink the content area when the sidebar is open so nothing is hidden behind it. */
   pushEditor: boolean;
   /** Also scroll the MarkEdit-preview pane (when in preview / side-by-side mode). */
   syncPreviewScroll: boolean;
@@ -28,7 +26,6 @@ const DEFAULTS: OutlineSettings = {
   position: 'right',
   width: 280,
   openByDefault: false,
-  showToggleButton: true,
   pushEditor: true,
   syncPreviewScroll: true,
   // ⇧⌘L by default — the native Table of Contents already uses ⇧⌘O.
@@ -70,7 +67,6 @@ export function loadSettings(): OutlineSettings {
     position: raw.position === 'left' ? 'left' : DEFAULTS.position,
     width: clampNumber(raw.width, 160, 600, DEFAULTS.width),
     openByDefault: asBoolean(raw.openByDefault, DEFAULTS.openByDefault),
-    showToggleButton: asBoolean(raw.showToggleButton, DEFAULTS.showToggleButton),
     pushEditor: asBoolean(raw.pushEditor, DEFAULTS.pushEditor),
     syncPreviewScroll: asBoolean(raw.syncPreviewScroll, DEFAULTS.syncPreviewScroll),
     shortcut,

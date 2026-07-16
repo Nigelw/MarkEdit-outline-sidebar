@@ -1,13 +1,16 @@
 import { MarkEdit } from 'markedit-api';
+import { TOGGLE_ACTION_TITLE } from './constants';
+import { addToolbarItem, removeToolbarItem } from './toolbar';
 import type { OutlineSidebar } from './sidebar';
 import type { OutlineSettings } from './settings';
 
 /**
- * Add an "Outline Sidebar" submenu under Extensions, with a keyboard shortcut
- * to toggle the sidebar. This is the extension-level equivalent of a toolbar
- * toggle — the native macOS NSToolbar can't be modified through the MarkEdit
- * extension API, so the toggle is exposed here, via the keyboard shortcut, and
- * via the floating in-editor button.
+ * Add an "Outline Sidebar" submenu under Extensions.
+ *
+ * The "Toggle Outline Sidebar" command is also the binding target for the
+ * native toolbar button: MarkEdit matches a `editor.customToolbarItems` entry
+ * to this command by its title (see `toolbar.ts`). The submenu also offers to
+ * write / remove that settings.json entry for you.
  */
 export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar): void {
   MarkEdit.addMainMenuItem({
@@ -15,7 +18,7 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
     icon: settings.position === 'left' ? 'sidebar.left' : 'sidebar.right',
     children: [
       {
-        title: 'Toggle Outline Sidebar',
+        title: TOGGLE_ACTION_TITLE,
         key: settings.shortcut.key,
         modifiers: settings.shortcut.modifiers,
         action: () => sidebar.toggle(),
@@ -32,6 +35,15 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
         title: 'Hide Outline',
         action: () => sidebar.close(),
         state: () => ({ isEnabled: sidebar.isOpen() }),
+      },
+      { separator: true },
+      {
+        title: 'Add Toolbar Button to settings.json…',
+        action: () => void addToolbarItem(settings),
+      },
+      {
+        title: 'Remove Toolbar Button…',
+        action: () => void removeToolbarItem(settings),
       },
     ],
   });

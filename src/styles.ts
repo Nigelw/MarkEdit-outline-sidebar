@@ -120,32 +120,4 @@ export const CSS = `
   opacity: 0.5;
   font-style: italic;
 }
-
-.meo-toggle {
-  position: fixed;
-  top: 8px;
-  z-index: 2147483001;
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  border: 1px solid var(--meo-border, rgba(127, 127, 127, 0.25));
-  background: var(--meo-bg, #ffffff);
-  color: var(--meo-fg, #1a1a1a);
-  opacity: 0.8;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
-  transition: opacity 120ms ease, right 180ms ease, left 180ms ease;
-}
-.meo-toggle:hover {
-  opacity: 1;
-}
-.meo-toggle svg {
-  width: 16px;
-  height: 16px;
-  display: block;
-}
 `;

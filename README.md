@@ -18,8 +18,8 @@ clicking headings — in both **edit** and **preview** modes.
   heading also scrolls the rendered preview to the matching heading.
 - **Live updates** — the outline rebuilds as you type (debounced) and re-highlights
   as you move around.
-- **Multiple ways to toggle** — a keyboard shortcut + Extensions menu command, and
-  a floating toggle button inside the editor (see *Toggling* below).
+- **Multiple ways to toggle** — a keyboard shortcut, an Extensions menu command, and
+  an optional **native toolbar button** (see *Toggling* below).
 - **Theme-aware** — the panel reads colors from the live editor theme, so it
   matches MarkEdit's light, dark, and custom themes automatically.
 
@@ -50,14 +50,37 @@ The extension exposes the toggle three ways:
 
 1. **Keyboard shortcut** — **⇧⌘L** by default (configurable).
 2. **Menu command** — *Extensions → Outline Sidebar → Toggle Outline Sidebar*.
-3. **Floating button** — a small outline button inside the editor window.
+3. **Native toolbar button** — a real macOS toolbar item (see below).
 
-> **Note on the native toolbar.** MarkEdit's toolbar uses native macOS `NSToolbar`
-> items, which **cannot be added or modified through the extension (JavaScript) API**.
-> The floating in-editor button is the closest an extension can get to a "toolbar
-> icon" toggle; the keyboard shortcut and menu command are the API-supported
-> equivalents. If you prefer a real toolbar button, that would require a change to
-> the MarkEdit app itself rather than an extension.
+### Adding the toolbar button
+
+MarkEdit reads `editor.customToolbarItems` from `settings.json` (MarkEdit **1.24+**)
+and creates a native `NSToolbarItem` for each entry; an entry with an `actionName`
+runs the main-menu command with that title when clicked. Our menu command is
+titled *"Toggle Outline Sidebar"*, so a toolbar item bound to it toggles the panel.
+
+**The easy way:** run *Extensions → Outline Sidebar → **Add Toolbar Button to
+settings.json…***. It merges the entry into your `settings.json` (leaving any
+existing items intact). Then:
+
+1. **Restart MarkEdit.**
+2. **View → Customize Toolbar…** and drag the **Outline** item into the toolbar.
+
+*Remove Toolbar Button…* reverses the settings change (then drag it back out via
+Customize Toolbar).
+
+**The manual way:** add this to `settings.json` yourself instead of using the menu
+command:
+
+```jsonc
+"editor.customToolbarItems": [
+  { "title": "Outline", "icon": "sidebar.right", "actionName": "Toggle Outline Sidebar" }
+]
+```
+
+`icon` is any [SF Symbol](https://developer.apple.com/sf-symbols/) name. This
+mechanism is the same one used by
+[markedit-direct-preview](https://github.com/Squarelight-ai/markedit-direct-preview).
 
 ## Configuration
 
@@ -71,7 +94,6 @@ Add an `outline-sidebar` object to your MarkEdit
     "position": "right",          // "right" | "left"
     "width": 280,                  // pixels (160–600)
     "openByDefault": false,        // open automatically when a document opens
-    "showToggleButton": true,      // show the floating in-editor toggle button
     "pushEditor": true,            // shrink the content area when open so nothing hides behind the panel
     "syncPreviewScroll": true,     // also scroll the preview pane in preview mode
     "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] }
@@ -96,6 +118,10 @@ Contents toolbar item.
   grid on `<body>`, so the panel constrains the body width; in pure preview mode the
   preview pane is an absolutely-positioned overlay, so the panel instead sets
   MarkEdit-preview's `--markedit-content-inset` variable. Both are reverted on close.
+- **The toolbar button** is not injected by the extension (the API can't touch the
+  native toolbar directly). Instead the extension writes an `editor.customToolbarItems`
+  entry into `settings.json`; MarkEdit turns that into a native toolbar item whose
+  click looks up our menu command by title and performs it.
 - The extension imports `markedit-api` and the `@codemirror/*` modules, which
   [`markedit-vite`](https://github.com/MarkEdit-app/MarkEdit-vite) externalizes so
   they resolve to MarkEdit's own live instances at runtime.
@@ -108,9 +134,10 @@ src/settings.ts      Read + validate settings from settings.json
 src/toc.ts           Extract headings from the syntax tree
 src/navigation.ts    Scroll the editor (and preview) to a heading
 src/sidebar.ts       The sidebar UI: build, render, theme, open/close
-src/menu.ts          Extensions-menu command + keyboard shortcut
+src/menu.ts          Extensions-menu commands + keyboard shortcut
+src/toolbar.ts       Add / remove the native toolbar item via settings.json
+src/constants.ts     Shared menu-command title (also the toolbar actionName)
 src/styles.ts        Panel CSS (theme-driven via CSS variables)
-src/icons.ts         Inline SVG icon for the toggle button
 ```
 
 ## License
