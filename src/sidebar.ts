@@ -2,6 +2,7 @@ import { MarkEdit } from 'markedit-api';
 import { extractHeadings, activeHeadingIndex, type Heading } from './toc';
 import { goToHeading } from './navigation';
 import { CSS, STYLE_ELEMENT_ID } from './styles';
+import { VISIBLE_STORAGE_KEY } from './constants';
 import type { OutlineSettings } from './settings';
 
 export class OutlineSidebar {
@@ -40,6 +41,20 @@ export class OutlineSidebar {
     return this.opened;
   }
 
+  /**
+   * Whether the sidebar should be open on launch: the remembered state if
+   * enabled and present, otherwise the `openByDefault` setting.
+   */
+  shouldStartOpen(): boolean {
+    if (this.settings.rememberState) {
+      const stored = readStoredVisibility();
+      if (stored !== undefined) {
+        return stored;
+      }
+    }
+    return this.settings.openByDefault;
+  }
+
   open(): void {
     if (!this.mounted || this.opened) {
       return;
@@ -49,6 +64,7 @@ export class OutlineSidebar {
     this.refresh();
     this.root.classList.add('meo-open');
     this.pushEditor(true);
+    this.persistVisibility();
   }
 
   close(): void {
@@ -58,6 +74,18 @@ export class OutlineSidebar {
     this.opened = false;
     this.root.classList.remove('meo-open');
     this.pushEditor(false);
+    this.persistVisibility();
+  }
+
+  private persistVisibility(): void {
+    if (!this.settings.rememberState) {
+      return;
+    }
+    try {
+      localStorage.setItem(VISIBLE_STORAGE_KEY, this.opened ? '1' : '0');
+    } catch {
+      // localStorage unavailable; remembering is best-effort.
+    }
   }
 
   toggle(): void {
@@ -267,6 +295,21 @@ export class OutlineSidebar {
     set('--meo-active-bg', dark ? 'rgba(255, 255, 255, 0.13)' : 'rgba(0, 0, 0, 0.06)');
     set('--meo-accent', 'AccentColor');
   }
+}
+
+function readStoredVisibility(): boolean | undefined {
+  try {
+    const value = localStorage.getItem(VISIBLE_STORAGE_KEY);
+    if (value === '1') {
+      return true;
+    }
+    if (value === '0') {
+      return false;
+    }
+  } catch {
+    // localStorage unavailable.
+  }
+  return undefined;
 }
 
 function firstOpaqueColor(candidates: string[]): string | undefined {

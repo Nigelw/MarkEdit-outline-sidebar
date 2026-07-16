@@ -5,3 +5,10 @@
  * matching this exact string (`NSApp.mainMenu.firstActionNamed`).
  */
 export const TOGGLE_ACTION_TITLE = 'Toggle Outline Sidebar';
+
+/**
+ * localStorage key used to remember whether the sidebar was open, so the state
+ * survives app relaunches. WKWebView localStorage persists across launches in
+ * MarkEdit (the same mechanism MarkEdit-preview uses for its view mode).
+ */
+export const VISIBLE_STORAGE_KEY = 'markedit-outline.visible';

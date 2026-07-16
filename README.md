@@ -18,6 +18,8 @@ clicking headings — in both **edit** and **preview** modes.
   heading also scrolls the rendered preview to the matching heading.
 - **Live updates** — the outline rebuilds as you type (debounced) and re-highlights
   as you move around.
+- **Remembers its state** — whether the sidebar was open or closed is restored on
+  the next launch (like MarkEdit's view mode); configurable.
 - **Multiple ways to toggle** — a keyboard shortcut, an Extensions menu command, and
   an optional **native toolbar button** (see *Toggling* below).
 - **Theme-aware** — the panel reads colors from the live editor theme, so it
@@ -93,7 +95,8 @@ Add an `outline-sidebar` object to your MarkEdit
   "outline-sidebar": {
     "position": "right",          // "right" | "left"
     "width": 280,                  // pixels (160–600)
-    "openByDefault": false,        // open automatically when a document opens
+    "openByDefault": false,        // open on first launch, before any remembered state
+    "rememberState": true,         // remember open/closed across app relaunches
     "pushEditor": true,            // shrink the content area when open so nothing hides behind the panel
     "syncPreviewScroll": true,     // also scroll the preview pane in preview mode
     "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] }

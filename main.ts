@@ -34,7 +34,7 @@ function start(): void {
   }
   started = true;
   sidebar.mount();
-  if (settings.openByDefault) {
+  if (sidebar.shouldStartOpen()) {
     sidebar.open();
   }
 }
