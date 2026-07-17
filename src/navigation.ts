@@ -70,17 +70,43 @@ function scrollPreviewToHeading(headings: Heading[], index: number): void {
   }
 }
 
-/** Briefly highlight an element (restartable on repeated clicks). */
+/**
+ * Briefly highlight a heading's text. The heading's inline content is wrapped
+ * in a span so the highlight hugs the text rather than filling the full-width
+ * block — and so it leaves the heading's underline rule (a border on the block)
+ * untouched. The wrapper is removed once the animation finishes.
+ */
 function flashElement(el: HTMLElement): void {
-  el.classList.remove('meo-flash');
-  // Force reflow so re-adding the class restarts the animation.
-  void el.offsetWidth;
-  el.classList.add('meo-flash');
-  const clear = () => {
-    el.classList.remove('meo-flash');
-    el.removeEventListener('animationend', clear);
+  // Clear any in-progress flash on this element first (restart on re-click).
+  unwrapFlashes(el);
+
+  const span = document.createElement('span');
+  span.className = 'meo-flash';
+  while (el.firstChild !== null) {
+    span.appendChild(el.firstChild);
+  }
+  el.appendChild(span);
+
+  const done = () => {
+    span.removeEventListener('animationend', done);
+    unwrapSpan(span);
   };
-  el.addEventListener('animationend', clear);
+  span.addEventListener('animationend', done);
+}
+
+function unwrapFlashes(el: HTMLElement): void {
+  el.querySelectorAll<HTMLElement>(':scope > span.meo-flash').forEach(unwrapSpan);
+}
+
+function unwrapSpan(span: HTMLElement): void {
+  const parent = span.parentElement;
+  if (parent === null) {
+    return;
+  }
+  while (span.firstChild !== null) {
+    parent.insertBefore(span.firstChild, span);
+  }
+  span.remove();
 }
 
 function getVisiblePreviewHeadings(): HTMLElement[] {

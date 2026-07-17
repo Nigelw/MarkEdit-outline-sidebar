@@ -110,10 +110,11 @@ export const CSS = `
   100% { background-color: transparent; transform: scale(1); }
 }
 .meo-flash {
+  display: inline-block;
+  padding: 0 0.25em;
+  margin: 0 -0.25em;
+  border-radius: 4px;
   animation: meo-flash 1.2s ease-out;
   transform-origin: left center;
-  border-radius: 4px;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
 }
 `;
