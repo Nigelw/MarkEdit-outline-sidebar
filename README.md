@@ -91,13 +91,14 @@ mechanism is the same one used by
 
 ## Configuration
 
-Add an `outline-sidebar` object to your MarkEdit
+Add an `extension.markeditOutlineSidebar` object to your MarkEdit
 [`settings.json`](https://github.com/MarkEdit-app/MarkEdit/wiki/Customization#advanced-settings)
-(in the same `Documents` folder). All fields are optional:
+(in the same `Documents` folder). The `extension.` prefix is required by MarkEdit's
+[settings schema](https://github.com/MarkEdit-app/schemas). All fields are optional:
 
 ```jsonc
 {
-  "outline-sidebar": {
+  "extension.markeditOutlineSidebar": {
     "position": "right",          // "right" | "left"
     "onLaunch": "remember",        // "remember" last state | "open" always | "closed" always
     "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] }

@@ -34,14 +34,17 @@ const DEFAULTS: OutlineSettings = {
 const VALID_MODIFIERS: KeyModifier[] = ['Shift', 'Control', 'Command', 'Option'];
 
 /**
- * Load settings from `settings.json` under the `outline-sidebar` key, falling
- * back to sensible defaults. Every field is validated so a malformed setting
- * can never break the extension.
+ * Load settings from `settings.json` under the `extension.markeditOutlineSidebar`
+ * key, falling back to sensible defaults. Every field is validated so a malformed
+ * setting can never break the extension.
+ *
+ * The `extension.` prefix is required by MarkEdit's settings schema, which only
+ * allows extension settings under keys matching `^extension\.`.
  */
 export function loadSettings(): OutlineSettings {
   let raw: Record<string, unknown> = {};
   try {
-    const value = MarkEdit.userSettings?.['outline-sidebar'];
+    const value = MarkEdit.userSettings?.['extension.markeditOutlineSidebar'];
     if (value && typeof value === 'object') {
       raw = value as Record<string, unknown>;
     }
