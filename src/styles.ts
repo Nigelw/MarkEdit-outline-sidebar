@@ -98,6 +98,36 @@ export const CSS = `
   font-style: italic;
 }
 
+/* Drag handle straddling the sidebar's inner edge, for resizing. */
+.meo-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  z-index: 2;
+  cursor: col-resize;
+}
+.meo-sidebar:not(.meo-open) .meo-resizer {
+  display: none;
+}
+.meo-sidebar[data-position="right"] .meo-resizer { left: -4px; }
+.meo-sidebar[data-position="left"] .meo-resizer { right: -4px; }
+.meo-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background 120ms ease;
+}
+.meo-sidebar[data-position="right"] .meo-resizer::after { left: 3px; }
+.meo-sidebar[data-position="left"] .meo-resizer::after { right: 3px; }
+.meo-resizer:hover::after,
+.meo-resizer.meo-dragging::after {
+  background: var(--meo-accent, AccentColor);
+}
+
 /* Brief highlight + subtle bounce flashed on the matching preview heading. */
 @keyframes meo-flash {
   0%   { background-color: var(--meo-flash, rgba(255, 209, 71, 0.6)); transform: scale(1); }

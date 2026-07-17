@@ -12,3 +12,6 @@ export const TOGGLE_ACTION_TITLE = 'Toggle Outline Sidebar';
  * MarkEdit (the same mechanism MarkEdit-preview uses for its view mode).
  */
 export const VISIBLE_STORAGE_KEY = 'markedit-outline.visible';
+
+/** localStorage key remembering the width the user dragged the sidebar to. */
+export const WIDTH_STORAGE_KEY = 'markedit-outline.width';

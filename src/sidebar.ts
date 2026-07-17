@@ -2,18 +2,22 @@ import { MarkEdit } from 'markedit-api';
 import { extractHeadings, activeHeadingIndex, type Heading } from './toc';
 import { goToHeading } from './navigation';
 import { CSS, STYLE_ELEMENT_ID } from './styles';
-import { VISIBLE_STORAGE_KEY } from './constants';
+import { VISIBLE_STORAGE_KEY, WIDTH_STORAGE_KEY } from './constants';
 import type { OutlineSettings } from './settings';
+
+const MIN_WIDTH = 160;
 
 export class OutlineSidebar {
   private readonly settings: OutlineSettings;
 
   private mounted = false;
   private opened = false;
+  private width: number;
 
   private root!: HTMLElement;
   private list!: HTMLElement;
   private empty!: HTMLElement;
+  private resizer!: HTMLElement;
 
   private headings: Heading[] = [];
   private items: HTMLElement[] = [];
@@ -21,6 +25,7 @@ export class OutlineSidebar {
 
   constructor(settings: OutlineSettings) {
     this.settings = settings;
+    this.width = settings.width;
   }
 
   /** Build the DOM and attach it to the document. Safe to call more than once. */
@@ -32,6 +37,12 @@ export class OutlineSidebar {
 
     this.injectStyles();
     this.buildSidebar();
+
+    // Restore a width the user previously dragged to, overriding the default.
+    const storedWidth = readStoredWidth();
+    if (storedWidth !== undefined) {
+      this.setWidth(storedWidth, false);
+    }
 
     this.applyTheme();
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => this.applyTheme());
@@ -148,8 +159,8 @@ export class OutlineSidebar {
     const root = document.createElement('div');
     root.className = 'meo-sidebar';
     root.setAttribute('data-position', this.settings.position);
-    root.style.setProperty('--meo-width', `${this.settings.width}px`);
-    root.style.width = `${this.settings.width}px`;
+    root.style.setProperty('--meo-width', `${this.width}px`);
+    root.style.width = `${this.width}px`;
 
     const header = document.createElement('div');
     header.className = 'meo-header';
@@ -170,12 +181,65 @@ export class OutlineSidebar {
     empty.textContent = 'No headings in this document.';
     empty.style.display = 'none';
 
-    root.append(header, list, empty);
+    const resizer = document.createElement('div');
+    resizer.className = 'meo-resizer';
+    resizer.title = 'Drag to resize';
+    resizer.addEventListener('mousedown', (event) => this.startResize(event));
+
+    root.append(header, list, empty, resizer);
     document.body.appendChild(root);
 
     this.root = root;
     this.list = list;
     this.empty = empty;
+    this.resizer = resizer;
+  }
+
+  // MARK: - Resizing
+
+  private maxWidth(): number {
+    return Math.max(MIN_WIDTH, Math.min(600, window.innerWidth - 120));
+  }
+
+  /** Apply a new width, re-pushing the editor if open, and optionally persist it. */
+  private setWidth(width: number, persist: boolean): void {
+    const clamped = Math.max(MIN_WIDTH, Math.min(this.maxWidth(), Math.round(width)));
+    this.width = clamped;
+    this.root.style.width = `${clamped}px`;
+    this.root.style.setProperty('--meo-width', `${clamped}px`);
+    if (this.opened) {
+      this.pushEditor(true);
+    }
+    if (persist) {
+      try {
+        localStorage.setItem(WIDTH_STORAGE_KEY, String(clamped));
+      } catch {
+        // localStorage unavailable; remembering the width is best-effort.
+      }
+    }
+  }
+
+  private startResize(event: MouseEvent): void {
+    event.preventDefault();
+    const right = this.settings.position === 'right';
+    this.resizer.classList.add('meo-dragging');
+    document.body.style.cursor = 'col-resize';
+    document.documentElement.style.userSelect = 'none';
+
+    const onMove = (e: MouseEvent) => {
+      const width = right ? window.innerWidth - e.clientX : e.clientX;
+      this.setWidth(width, false);
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      this.resizer.classList.remove('meo-dragging');
+      document.body.style.cursor = '';
+      document.documentElement.style.userSelect = '';
+      this.setWidth(this.width, true); // persist the final width
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
   }
 
   // MARK: - Rendering
@@ -237,7 +301,7 @@ export class OutlineSidebar {
       return;
     }
 
-    const width = this.settings.width;
+    const width = this.width;
     const right = this.settings.position === 'right';
     const body = document.body.style;
     const root = document.documentElement.style;
@@ -297,6 +361,21 @@ export class OutlineSidebar {
       dark ? 'rgba(255, 214, 92, 0.60)' : 'rgba(255, 209, 71, 0.60)',
     );
   }
+}
+
+function readStoredWidth(): number | undefined {
+  try {
+    const value = localStorage.getItem(WIDTH_STORAGE_KEY);
+    if (value !== null) {
+      const width = parseInt(value, 10);
+      if (Number.isFinite(width) && width > 0) {
+        return width;
+      }
+    }
+  } catch {
+    // localStorage unavailable.
+  }
+  return undefined;
 }
 
 function readStoredVisibility(): boolean | undefined {
