@@ -101,13 +101,17 @@ export const CSS = `
   font-style: italic;
 }
 
-/* Brief highlight flashed on the matching preview heading after navigation. */
+/* Brief highlight + subtle bounce flashed on the matching preview heading. */
 @keyframes meo-flash {
-  from { background-color: var(--meo-flash, rgba(255, 209, 71, 0.6)); }
-  to { background-color: transparent; }
+  0%   { background-color: var(--meo-flash, rgba(255, 209, 71, 0.6)); transform: scale(1); }
+  12%  { transform: scale(1.04); }
+  28%  { transform: scale(0.99); }
+  40%  { transform: scale(1); }
+  100% { background-color: transparent; transform: scale(1); }
 }
 .meo-flash {
   animation: meo-flash 1.2s ease-out;
+  transform-origin: left center;
   border-radius: 4px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
