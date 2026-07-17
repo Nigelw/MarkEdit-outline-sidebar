@@ -37,6 +37,19 @@ export const CSS = `
   transform: translateX(0);
 }
 
+/*
+ * MarkEdit draws its active-line indicator (a CodeMirror layer, .cm-md-activeLine)
+ * with viewport-based coordinates that assume the editor starts at the window's
+ * left edge. A LEFT-docked sidebar shifts the editor right (body margin-left), so
+ * the layer over-offsets by exactly the sidebar width — the indicator ends up
+ * drawn only on the right, sized by the shift. Translate the layer back by that
+ * width to restore a full-width indicator. (Right-docked doesn't move the body's
+ * left edge, so it's unaffected and this rule never applies.)
+ */
+html.meo-push-left .cm-md-activeLine {
+  transform: translateX(calc(-1 * var(--meo-width, 0px)));
+}
+
 .meo-header {
   display: flex;
   align-items: center;

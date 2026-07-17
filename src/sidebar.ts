@@ -314,11 +314,16 @@ export class OutlineSidebar {
       //    ignores the body box; MarkEdit-preview exposes this CSS variable to
       //    inset that overlay, so we reserve the panel's edge here too.
       root.setProperty('--markedit-content-inset', right ? `0 ${width}px 0 0` : `0 0 0 ${width}px`);
+      // 3. Expose the width and, for a left dock, a flag so the active-line
+      //    indicator can be re-offset for the editor's rightward shift (styles.ts).
+      root.setProperty('--meo-width', `${width}px`);
+      document.documentElement.classList.toggle('meo-push-left', !right);
     } else {
       body.width = '';
       body.marginLeft = '';
       body.marginRight = '';
       root.removeProperty('--markedit-content-inset');
+      document.documentElement.classList.remove('meo-push-left');
     }
 
     // Let CodeMirror re-measure so text reflows within the new width.
