@@ -8,10 +8,13 @@ import type { Heading } from './toc';
  * the heading — so switching to edit mode lands there — and, when a MarkEdit-
  * preview pane is visible, its matching heading is highlighted.
  *
- * The preview is moved by MarkEdit-preview's own editor→preview scroll-sync (we
- * deliberately do NOT scroll it ourselves). Because the editor scroll is
- * idempotent, clicking the same item again doesn't move the editor, so no scroll
- * event fires, the sync doesn't re-run, and the preview viewport stays put.
+ * How the preview pane is moved depends on MarkEdit-preview's scroll-sync:
+ * - Sync ON (the default): its editor→preview sync moves the preview for us. We
+ *   deliberately do NOT scroll the preview ourselves — and since the editor
+ *   scroll is idempotent, clicking the same item again doesn't move the editor,
+ *   so no scroll event fires, the sync doesn't re-run, and the viewport stays put.
+ * - Sync OFF: nothing else moves the preview, so we scroll it ourselves,
+ *   idempotently (no sync to fight, so repeat clicks stay stable).
  */
 export function goToHeading(headings: Heading[], index: number, syncPreview: boolean): void {
   const heading = headings[index];
@@ -35,6 +38,13 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
   if (syncPreview) {
     const target = findPreviewHeading(headings, index);
     if (target !== undefined) {
+      // When MarkEdit-preview's scroll-sync is off it won't move the preview to
+      // follow the editor, so scroll it ourselves. When it's on, leave the
+      // preview to the sync (scrolling it here too would fight it).
+      if (!isPreviewScrollSyncEnabled()) {
+        document.querySelectorAll<HTMLElement>('.markdown-body span.meo-flash').forEach(unwrapSpan);
+        alignPreviewHeading(target);
+      }
       flashElement(target);
     }
   }
@@ -43,6 +53,63 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
 function isPreviewOverlayActive(): boolean {
   const overlay = document.querySelector<HTMLElement>('.markdown-body.overlay');
   return overlay !== null && isDisplayed(overlay);
+}
+
+/**
+ * Whether MarkEdit-preview's editor→preview scroll synchronization is enabled.
+ * Mirrors MarkEdit-preview's own reading of `extension.markeditPreview.syncScroll`,
+ * which defaults to `true` and is only off when explicitly set to `false`.
+ */
+function isPreviewScrollSyncEnabled(): boolean {
+  try {
+    const root = MarkEdit.userSettings?.['extension.markeditPreview'];
+    if (root !== null && typeof root === 'object') {
+      const value = (root as Record<string, unknown>).syncScroll;
+      if (typeof value === 'boolean') {
+        return value;
+      }
+    }
+  } catch {
+    // userSettings unavailable; assume the default (enabled).
+  }
+  return true;
+}
+
+/**
+ * Align a heading to the top of the preview pane by setting the scroll
+ * container's `scrollTop` directly. Unlike `scrollIntoView`, this is idempotent:
+ * clicking the same outline item again computes the same target and only moves
+ * when it actually differs, so the viewport stays put on repeat clicks.
+ */
+function alignPreviewHeading(target: HTMLElement): void {
+  const container = getScrollContainer(target);
+  if (container === undefined) {
+    target.scrollIntoView({ block: 'start', behavior: 'auto' });
+    return;
+  }
+
+  const margin = 8;
+  const current = container.scrollTop;
+  const offset = target.getBoundingClientRect().top - container.getBoundingClientRect().top;
+  const maxScroll = container.scrollHeight - container.clientHeight;
+  const desired = Math.max(0, Math.min(maxScroll, Math.round(current + offset - margin)));
+
+  // Only scroll when the target isn't already aligned (>1px guards sub-pixel jitter).
+  if (Math.abs(desired - current) > 1) {
+    container.scrollTop = desired;
+  }
+}
+
+function getScrollContainer(el: HTMLElement): HTMLElement | undefined {
+  let node = el.parentElement;
+  while (node !== null && node !== document.body) {
+    const overflowY = getComputedStyle(node).overflowY;
+    if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return undefined;
 }
 
 function findPreviewHeading(headings: Heading[], index: number): HTMLElement | undefined {
