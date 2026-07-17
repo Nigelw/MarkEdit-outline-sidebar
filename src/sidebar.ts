@@ -41,18 +41,16 @@ export class OutlineSidebar {
     return this.opened;
   }
 
-  /**
-   * Whether the sidebar should be open on launch: the remembered state if
-   * enabled and present, otherwise the `openByDefault` setting.
-   */
+  /** Whether the sidebar should be open on launch, per the `onLaunch` setting. */
   shouldStartOpen(): boolean {
-    if (this.settings.rememberState) {
-      const stored = readStoredVisibility();
-      if (stored !== undefined) {
-        return stored;
-      }
+    switch (this.settings.onLaunch) {
+      case 'open':
+        return true;
+      case 'closed':
+        return false;
+      case 'remember':
+        return readStoredVisibility() ?? false;
     }
-    return this.settings.openByDefault;
   }
 
   open(): void {
@@ -78,7 +76,7 @@ export class OutlineSidebar {
   }
 
   private persistVisibility(): void {
-    if (!this.settings.rememberState) {
+    if (this.settings.onLaunch !== 'remember') {
       return;
     }
     try {

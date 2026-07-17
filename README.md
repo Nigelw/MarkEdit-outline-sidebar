@@ -95,8 +95,7 @@ Add an `outline-sidebar` object to your MarkEdit
   "outline-sidebar": {
     "position": "right",          // "right" | "left"
     "width": 280,                  // pixels (160–600)
-    "openByDefault": false,        // open on first launch, before any remembered state
-    "rememberState": true,         // remember open/closed across app relaunches
+    "onLaunch": "remember",        // "remember" last state | "open" always | "closed" always
     "pushEditor": true,            // shrink the content area when open so nothing hides behind the panel
     "syncPreviewScroll": true,     // also scroll the preview pane in preview mode
     "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] }

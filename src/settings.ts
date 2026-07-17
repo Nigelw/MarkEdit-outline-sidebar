@@ -2,6 +2,14 @@ import { MarkEdit } from 'markedit-api';
 
 export type KeyModifier = 'Shift' | 'Control' | 'Command' | 'Option';
 
+/**
+ * What the sidebar does on launch:
+ * - `remember`: restore the last open/closed state (closed on a fresh install)
+ * - `open`: always start open
+ * - `closed`: always start closed
+ */
+export type LaunchBehavior = 'remember' | 'open' | 'closed';
+
 export interface Shortcut {
   key: string;
   modifiers: KeyModifier[];
@@ -12,10 +20,8 @@ export interface OutlineSettings {
   position: 'left' | 'right';
   /** Sidebar width in pixels. */
   width: number;
-  /** Open the sidebar automatically on first launch (before any remembered state). */
-  openByDefault: boolean;
-  /** Remember the open/closed state across app relaunches. */
-  rememberState: boolean;
+  /** Whether the sidebar is shown on launch: remember last state, always open, or always closed. */
+  onLaunch: LaunchBehavior;
   /** Shrink the content area when the sidebar is open so nothing is hidden behind it. */
   pushEditor: boolean;
   /** Also scroll the MarkEdit-preview pane (when in preview / side-by-side mode). */
@@ -27,8 +33,7 @@ export interface OutlineSettings {
 const DEFAULTS: OutlineSettings = {
   position: 'right',
   width: 280,
-  openByDefault: false,
-  rememberState: true,
+  onLaunch: 'remember',
   pushEditor: true,
   syncPreviewScroll: true,
   // ⇧⌘L by default — the native Table of Contents already uses ⇧⌘O.
@@ -69,8 +74,7 @@ export function loadSettings(): OutlineSettings {
   return {
     position: raw.position === 'left' ? 'left' : DEFAULTS.position,
     width: clampNumber(raw.width, 160, 600, DEFAULTS.width),
-    openByDefault: asBoolean(raw.openByDefault, DEFAULTS.openByDefault),
-    rememberState: asBoolean(raw.rememberState, DEFAULTS.rememberState),
+    onLaunch: raw.onLaunch === 'open' || raw.onLaunch === 'closed' ? raw.onLaunch : DEFAULTS.onLaunch,
     pushEditor: asBoolean(raw.pushEditor, DEFAULTS.pushEditor),
     syncPreviewScroll: asBoolean(raw.syncPreviewScroll, DEFAULTS.syncPreviewScroll),
     shortcut,
