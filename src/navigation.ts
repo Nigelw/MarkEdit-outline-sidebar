@@ -4,9 +4,14 @@ import { EditorSelection } from '@codemirror/state';
 import type { Heading } from './toc';
 
 /**
- * Navigate to a heading. The editor caret is always moved and scrolled to the
- * heading; when a MarkEdit-preview pane is visible (preview / side-by-side
- * view modes) the corresponding rendered heading is scrolled into view too.
+ * Navigate to a heading. The editor caret is moved and the editor is scrolled to
+ * the heading — so switching to edit mode lands there — and, when a MarkEdit-
+ * preview pane is visible, its matching heading is highlighted.
+ *
+ * The preview is moved by MarkEdit-preview's own editor→preview scroll-sync (we
+ * deliberately do NOT scroll it ourselves). Because the editor scroll is
+ * idempotent, clicking the same item again doesn't move the editor, so no scroll
+ * event fires, the sync doesn't re-run, and the preview viewport stays put.
  */
 export function goToHeading(headings: Heading[], index: number, syncPreview: boolean): void {
   const heading = headings[index];
@@ -17,32 +22,19 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
   const view = MarkEdit.editorView;
   const pos = Math.max(0, Math.min(heading.from, view.state.doc.length));
 
-  // In pure preview mode the preview is an absolute overlay ON TOP of the
-  // editor — the editor pane still has size, so it isn't really "hidden". If we
-  // scroll it there, MarkEdit-preview's editor→preview scroll-sync fires and
-  // nudges the preview after our own align. So: scroll the editor only when the
-  // preview overlay is NOT covering it, and drive the preview scroll ourselves.
-  const previewOverlay = isPreviewOverlayActive();
-  const scrollEditor = !previewOverlay && isEditorVisible(view);
-
   view.dispatch({
     selection: EditorSelection.cursor(pos),
-    ...(scrollEditor ? { effects: EditorView.scrollIntoView(pos, { y: 'start', yMargin: 8 }) } : {}),
+    effects: EditorView.scrollIntoView(pos, { y: 'start', yMargin: 8 }),
   });
 
-  if (scrollEditor) {
+  // Don't steal focus into the editor while it's hidden behind the preview overlay.
+  if (!isPreviewOverlayActive()) {
     view.focus();
   }
 
   if (syncPreview) {
     const target = findPreviewHeading(headings, index);
     if (target !== undefined) {
-      // Drive the preview scroll ourselves only in pure preview mode. In
-      // side-by-side the editor's scroll-sync already moves the preview.
-      if (previewOverlay) {
-        document.querySelectorAll<HTMLElement>('.markdown-body span.meo-flash').forEach(unwrapSpan);
-        alignPreviewHeading(target);
-      }
       flashElement(target);
     }
   }
@@ -51,10 +43,6 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
 function isPreviewOverlayActive(): boolean {
   const overlay = document.querySelector<HTMLElement>('.markdown-body.overlay');
   return overlay !== null && isDisplayed(overlay);
-}
-
-function isEditorVisible(view: EditorView): boolean {
-  return view.scrollDOM.clientHeight > 0 && view.scrollDOM.clientWidth > 0;
 }
 
 function findPreviewHeading(headings: Heading[], index: number): HTMLElement | undefined {
@@ -69,43 +57,6 @@ function findPreviewHeading(headings: Heading[], index: number): HTMLElement | u
   // Fallback: match on normalized heading text.
   const wanted = normalize(headings[index].title);
   return previewHeadings.find((el) => normalize(el.textContent ?? '') === wanted);
-}
-
-/**
- * Align a heading to the top of the preview pane by setting the scroll
- * container's `scrollTop` directly. Unlike `scrollIntoView`, this is idempotent:
- * clicking the same outline item again computes the same target and only moves
- * when it actually differs, so the viewport stays put.
- */
-function alignPreviewHeading(target: HTMLElement): void {
-  const container = getScrollContainer(target);
-  if (container === undefined) {
-    target.scrollIntoView({ block: 'start', behavior: 'auto' });
-    return;
-  }
-
-  const margin = 8;
-  const current = container.scrollTop;
-  const offset = target.getBoundingClientRect().top - container.getBoundingClientRect().top;
-  const maxScroll = container.scrollHeight - container.clientHeight;
-  const desired = Math.max(0, Math.min(maxScroll, Math.round(current + offset - margin)));
-
-  // Only scroll when the target isn't already aligned (>1px guards sub-pixel jitter).
-  if (Math.abs(desired - current) > 1) {
-    container.scrollTop = desired;
-  }
-}
-
-function getScrollContainer(el: HTMLElement): HTMLElement | undefined {
-  let node = el.parentElement;
-  while (node !== null && node !== document.body) {
-    const overflowY = getComputedStyle(node).overflowY;
-    if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
-      return node;
-    }
-    node = node.parentElement;
-  }
-  return undefined;
 }
 
 /**
