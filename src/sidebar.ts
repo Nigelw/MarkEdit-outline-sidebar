@@ -285,6 +285,15 @@ export class OutlineSidebar {
     set('--meo-hover', dark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)');
     set('--meo-active-bg', dark ? 'rgba(255, 255, 255, 0.13)' : 'rgba(0, 0, 0, 0.06)');
     set('--meo-accent', 'AccentColor');
+
+    // The preview-navigation flash is applied to preview headings, which live
+    // outside the sidebar's subtree, so its color goes on <html> to inherit
+    // everywhere. Dark themes get a lower-alpha amber so it glows without
+    // washing out the heading text.
+    document.documentElement.style.setProperty(
+      '--meo-flash',
+      dark ? 'rgba(255, 214, 92, 0.30)' : 'rgba(255, 209, 71, 0.60)',
+    );
   }
 }
 
