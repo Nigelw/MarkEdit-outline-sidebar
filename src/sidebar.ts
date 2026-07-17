@@ -279,11 +279,14 @@ export class OutlineSidebar {
     const dark = isDarkColor(bg);
 
     const set = (name: string, value: string) => this.root.style.setProperty(name, value);
-    set('--meo-bg', bg);
+    // Panel background: a fixed #fafafa in light mode (a hair off the white
+    // editor, so the color alone separates the two); in dark mode a subtle
+    // lightening of the editor background for the same effect. Hover/active are
+    // solid (not translucent) so rounded corners stay clean.
+    set('--meo-bg', dark ? lighten(bg, 8) : '#fafafa');
     set('--meo-fg', fg);
-    set('--meo-border', dark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.12)');
-    set('--meo-hover', dark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)');
-    set('--meo-active-bg', dark ? 'rgba(255, 255, 255, 0.13)' : 'rgba(0, 0, 0, 0.06)');
+    set('--meo-hover', dark ? lighten(bg, 22) : '#f0f0f0');
+    set('--meo-active-bg', dark ? lighten(bg, 32) : '#e8e8e8');
     set('--meo-accent', 'AccentColor');
 
     // The preview-navigation flash is applied to preview headings, which live
@@ -319,6 +322,16 @@ function firstOpaqueColor(candidates: string[]): string | undefined {
     }
   }
   return undefined;
+}
+
+/** Lighten a color by adding `amount` to each RGB channel (clamped). */
+function lighten(color: string, amount: number): string {
+  const rgb = parseColor(color);
+  if (rgb === undefined) {
+    return color;
+  }
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v + amount)));
+  return `rgb(${clamp(rgb.r)}, ${clamp(rgb.g)}, ${clamp(rgb.b)})`;
 }
 
 function isDarkColor(color: string): boolean {

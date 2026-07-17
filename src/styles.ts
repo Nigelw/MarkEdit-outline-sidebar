@@ -15,7 +15,7 @@ export const CSS = `
   flex-direction: column;
   box-sizing: border-box;
   z-index: 2147483000;
-  background: var(--meo-bg, #ffffff);
+  background: var(--meo-bg, #fafafa);
   color: var(--meo-fg, #1a1a1a);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   font-size: 13px;
@@ -27,14 +27,10 @@ export const CSS = `
 }
 .meo-sidebar[data-position="right"] {
   right: 0;
-  border-left: 1px solid var(--meo-border, rgba(127, 127, 127, 0.25));
-  box-shadow: -6px 0 18px rgba(0, 0, 0, 0.12);
   transform: translateX(100%);
 }
 .meo-sidebar[data-position="left"] {
   left: 0;
-  border-right: 1px solid var(--meo-border, rgba(127, 127, 127, 0.25));
-  box-shadow: 6px 0 18px rgba(0, 0, 0, 0.12);
   transform: translateX(-100%);
 }
 .meo-sidebar.meo-open {
@@ -77,14 +73,15 @@ export const CSS = `
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-left: 2px solid transparent;
 }
 .meo-item:hover {
-  background: var(--meo-hover, rgba(127, 127, 127, 0.16));
+  background: var(--meo-hover, #f0f0f0);
 }
 .meo-item.meo-active {
-  background: var(--meo-active-bg, rgba(0, 122, 255, 0.14));
-  border-left-color: var(--meo-accent, AccentColor);
+  background: var(--meo-active-bg, #e8e8e8);
+  /* Inset shadow rather than a left border: it respects border-radius, so it
+     can't leave dark fringes at the rounded corners. */
+  box-shadow: inset 2px 0 0 0 var(--meo-accent, AccentColor);
   font-weight: 600;
 }
 .meo-item[data-level="1"] { padding-left: 8px; font-weight: 600; }
