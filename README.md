@@ -110,6 +110,10 @@ Add an `extension.markeditOutlineSidebar` object to your MarkEdit
 The default is **⇧⌘L** because ⇧⌘O is already used by MarkEdit's built-in Table of
 Contents toolbar item.
 
+You can also switch the docked side from *Extensions → Outline Sidebar → Dock Left
+/ Dock Right* — it writes `position` to `settings.json` and prompts a restart to
+apply.
+
 The sidebar width is adjusted with the draggable divider and remembered
 automatically.
 
@@ -144,7 +148,9 @@ src/navigation.ts    Scroll the editor (and preview) to a heading
 src/sidebar.ts       The sidebar UI: build, render, theme, open/close
 src/menu.ts          Extensions-menu commands + keyboard shortcut
 src/toolbar.ts       Add / remove the native toolbar item via settings.json
-src/constants.ts     Shared menu-command title (also the toolbar actionName)
+src/position.ts      Change the docked side via settings.json
+src/settingsFile.ts  Read / write settings.json (shared)
+src/constants.ts     Shared constants (command title, settings namespace, storage keys)
 src/styles.ts        Panel CSS (theme-driven via CSS variables)
 ```
 

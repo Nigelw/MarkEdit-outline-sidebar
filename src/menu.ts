@@ -1,6 +1,7 @@
 import { MarkEdit } from 'markedit-api';
 import { TOGGLE_ACTION_TITLE } from './constants';
 import { addToolbarItem, removeToolbarItem } from './toolbar';
+import { setSidebarPosition } from './position';
 import type { OutlineSidebar } from './sidebar';
 import type { OutlineSettings } from './settings';
 
@@ -26,11 +27,22 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
       },
       { separator: true },
       {
-        title: 'Add Toolbar Button to settings.json…',
+        title: 'Dock Left',
+        action: () => void setSidebarPosition('left', settings.position),
+        state: () => ({ isSelected: settings.position === 'left' }),
+      },
+      {
+        title: 'Dock Right',
+        action: () => void setSidebarPosition('right', settings.position),
+        state: () => ({ isSelected: settings.position === 'right' }),
+      },
+      { separator: true },
+      {
+        title: 'Add Toolbar Button to settings.json',
         action: () => void addToolbarItem(),
       },
       {
-        title: 'Remove Toolbar Button…',
+        title: 'Remove Toolbar Button',
         action: () => void removeToolbarItem(),
       },
     ],

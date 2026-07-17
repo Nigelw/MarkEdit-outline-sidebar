@@ -7,6 +7,13 @@
 export const TOGGLE_ACTION_TITLE = 'Toggle Outline Sidebar';
 
 /**
+ * settings.json key holding this extension's settings. The `extension.` prefix
+ * is required by MarkEdit's settings schema (which only allows extension keys
+ * matching `^extension\.`).
+ */
+export const SETTINGS_NAMESPACE = 'extension.markeditOutlineSidebar';
+
+/**
  * localStorage key used to remember whether the sidebar was open, so the state
  * survives app relaunches. WKWebView localStorage persists across launches in
  * MarkEdit (the same mechanism MarkEdit-preview uses for its view mode).

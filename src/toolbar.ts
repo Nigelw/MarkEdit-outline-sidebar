@@ -1,5 +1,6 @@
 import { MarkEdit } from 'markedit-api';
 import { TOGGLE_ACTION_TITLE } from './constants';
+import { readSettings, writeSettings } from './settingsFile';
 
 /**
  * Adds / removes a native macOS toolbar item, by editing MarkEdit's
@@ -12,7 +13,6 @@ import { TOGGLE_ACTION_TITLE } from './constants';
  * the user drags it in via View → Customize Toolbar.
  */
 
-const SETTINGS_FILE = 'settings.json';
 const TOOLBAR_KEY = 'editor.customToolbarItems';
 
 interface ToolbarItem {
@@ -20,10 +20,6 @@ interface ToolbarItem {
   icon: string;
   actionName?: string;
   menuName?: string;
-}
-
-function settingsPath(): string {
-  return `${MarkEdit.getDirectoryPath('documents')}/${SETTINGS_FILE}`;
 }
 
 function toolbarItemFor(): ToolbarItem {
@@ -40,35 +36,6 @@ function isOurItem(value: unknown): boolean {
     value !== null &&
     (value as { actionName?: unknown }).actionName === TOGGLE_ACTION_TITLE
   );
-}
-
-/**
- * Parse the existing settings.json. Returns the parsed object, `{}` when the
- * file is absent/empty, or `undefined` when it exists but can't be parsed — in
- * which case the caller must NOT overwrite it (that would destroy user data).
- */
-async function readSettings(): Promise<Record<string, unknown> | undefined> {
-  const content = await MarkEdit.getFileContent(settingsPath());
-  if (content === undefined || content.trim().length === 0) {
-    return {};
-  }
-  try {
-    const parsed = JSON.parse(content) as unknown;
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      return undefined;
-    }
-    return parsed as Record<string, unknown>;
-  } catch {
-    return undefined;
-  }
-}
-
-async function writeSettings(settings: Record<string, unknown>): Promise<boolean> {
-  return MarkEdit.createFile({
-    path: settingsPath(),
-    string: `${JSON.stringify(settings, null, 2)}\n`,
-    overwrites: true,
-  });
 }
 
 async function unparseableAlert(item: ToolbarItem): Promise<void> {

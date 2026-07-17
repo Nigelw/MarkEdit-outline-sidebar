@@ -1,6 +1,10 @@
 import { MarkEdit } from 'markedit-api';
+import { SETTINGS_NAMESPACE } from './constants';
 
 export type KeyModifier = 'Shift' | 'Control' | 'Command' | 'Option';
+
+/** Which edge the sidebar is docked to. */
+export type Position = 'left' | 'right';
 
 /**
  * What the sidebar does on launch:
@@ -17,7 +21,7 @@ export interface Shortcut {
 
 export interface OutlineSettings {
   /** Which edge the sidebar is docked to. */
-  position: 'left' | 'right';
+  position: Position;
   /** Whether the sidebar is shown on launch: remember last state, always open, or always closed. */
   onLaunch: LaunchBehavior;
   /** Keyboard shortcut for the "Toggle Outline Sidebar" menu command. */
@@ -44,7 +48,7 @@ const VALID_MODIFIERS: KeyModifier[] = ['Shift', 'Control', 'Command', 'Option']
 export function loadSettings(): OutlineSettings {
   let raw: Record<string, unknown> = {};
   try {
-    const value = MarkEdit.userSettings?.['extension.markeditOutlineSidebar'];
+    const value = MarkEdit.userSettings?.[SETTINGS_NAMESPACE];
     if (value && typeof value === 'object') {
       raw = value as Record<string, unknown>;
     }
