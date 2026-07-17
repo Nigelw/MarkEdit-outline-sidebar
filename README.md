@@ -71,6 +71,8 @@ existing items intact). Then:
 1. **Restart MarkEdit.**
 2. **View → Customize Toolbar…** and drag the **Outline** item into the toolbar.
 
+![Customize Toolbar showing the Outline item being dragged into the toolbar](assets/customize-toolbar.png)
+
 *Remove Toolbar Button…* reverses the settings change (then drag it back out via
 Customize Toolbar).
 
