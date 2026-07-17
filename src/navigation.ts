@@ -61,10 +61,26 @@ function scrollPreviewToHeading(headings: Heading[], index: number): void {
       target = previewHeadings.find((el) => normalize(el.textContent ?? '') === wanted);
     }
 
-    target?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    if (target !== undefined) {
+      target.scrollIntoView({ block: 'start', behavior: 'auto' });
+      flashElement(target);
+    }
   } catch {
     // Never let preview handling break navigation.
   }
+}
+
+/** Briefly highlight an element (restartable on repeated clicks). */
+function flashElement(el: HTMLElement): void {
+  el.classList.remove('meo-flash');
+  // Force reflow so re-adding the class restarts the animation.
+  void el.offsetWidth;
+  el.classList.add('meo-flash');
+  const clear = () => {
+    el.classList.remove('meo-flash');
+    el.removeEventListener('animationend', clear);
+  };
+  el.addEventListener('animationend', clear);
 }
 
 function getVisiblePreviewHeadings(): HTMLElement[] {

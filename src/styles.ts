@@ -44,7 +44,6 @@ export const CSS = `
 .meo-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 10px 12px 8px 14px;
   flex: 0 0 auto;
 }
@@ -54,25 +53,6 @@ export const CSS = `
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.6;
-}
-.meo-close {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: inherit;
-  opacity: 0.55;
-  cursor: pointer;
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-.meo-close:hover {
-  opacity: 1;
-  background: var(--meo-hover, rgba(127, 127, 127, 0.16));
 }
 
 .meo-list {
@@ -119,5 +99,17 @@ export const CSS = `
   padding: 16px 16px;
   opacity: 0.5;
   font-style: italic;
+}
+
+/* Brief highlight flashed on the matching preview heading after navigation. */
+@keyframes meo-flash {
+  from { background-color: var(--meo-flash, rgba(255, 209, 71, 0.6)); }
+  to { background-color: transparent; }
+}
+.meo-flash {
+  animation: meo-flash 1.2s ease-out;
+  border-radius: 4px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 `;

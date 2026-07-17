@@ -158,14 +158,7 @@ export class OutlineSidebar {
     title.className = 'meo-title';
     title.textContent = 'Outline';
 
-    const close = document.createElement('button');
-    close.className = 'meo-close';
-    close.title = 'Hide Outline';
-    close.setAttribute('aria-label', 'Hide Outline');
-    close.textContent = '✕'; // ✕
-    close.addEventListener('click', () => this.close());
-
-    header.append(title, close);
+    header.append(title);
 
     const list = document.createElement('div');
     list.className = 'meo-list';

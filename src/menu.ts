@@ -15,7 +15,6 @@ import type { OutlineSettings } from './settings';
 export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar): void {
   MarkEdit.addMainMenuItem({
     title: 'Outline Sidebar',
-    icon: settings.position === 'left' ? 'sidebar.left' : 'sidebar.right',
     children: [
       {
         title: TOGGLE_ACTION_TITLE,
@@ -24,17 +23,6 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
         action: () => sidebar.toggle(),
         // `state` requires MarkEdit 1.24.0+; it shows a checkmark while open.
         state: () => ({ isSelected: sidebar.isOpen() }),
-      },
-      { separator: true },
-      {
-        title: 'Show Outline',
-        action: () => sidebar.open(),
-        state: () => ({ isEnabled: !sidebar.isOpen() }),
-      },
-      {
-        title: 'Hide Outline',
-        action: () => sidebar.close(),
-        state: () => ({ isEnabled: sidebar.isOpen() }),
       },
       { separator: true },
       {

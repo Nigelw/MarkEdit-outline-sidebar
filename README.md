@@ -15,7 +15,8 @@ clicking headings — in both **edit** and **preview** modes.
   the caret there.
 - **Works in preview too** — when the [MarkEdit-preview](https://github.com/MarkEdit-app/MarkEdit-preview)
   extension is showing a preview (preview or side-by-side view mode), clicking a
-  heading also scrolls the rendered preview to the matching heading.
+  heading scrolls the rendered preview to the matching heading and briefly
+  highlights it.
 - **Live updates** — the outline rebuilds as you type (debounced) and re-highlights
   as you move around.
 - **Remembers its state** — whether the sidebar was open or closed is restored on
