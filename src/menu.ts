@@ -27,11 +27,11 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
       { separator: true },
       {
         title: 'Add Toolbar Button to settings.json…',
-        action: () => void addToolbarItem(settings),
+        action: () => void addToolbarItem(),
       },
       {
         title: 'Remove Toolbar Button…',
-        action: () => void removeToolbarItem(settings),
+        action: () => void removeToolbarItem(),
       },
     ],
   });

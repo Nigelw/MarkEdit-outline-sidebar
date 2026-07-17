@@ -1,6 +1,5 @@
 import { MarkEdit } from 'markedit-api';
 import { TOGGLE_ACTION_TITLE } from './constants';
-import type { OutlineSettings } from './settings';
 
 /**
  * Adds / removes a native macOS toolbar item, by editing MarkEdit's
@@ -27,10 +26,10 @@ function settingsPath(): string {
   return `${MarkEdit.getDirectoryPath('documents')}/${SETTINGS_FILE}`;
 }
 
-function toolbarItemFor(settings: OutlineSettings): ToolbarItem {
+function toolbarItemFor(): ToolbarItem {
   return {
     title: 'Outline',
-    icon: settings.position === 'left' ? 'sidebar.left' : 'sidebar.right',
+    icon: 'list.bullet.rectangle.portrait',
     actionName: TOGGLE_ACTION_TITLE,
   };
 }
@@ -82,8 +81,8 @@ async function unparseableAlert(item: ToolbarItem): Promise<void> {
   });
 }
 
-export async function addToolbarItem(settings: OutlineSettings): Promise<void> {
-  const item = toolbarItemFor(settings);
+export async function addToolbarItem(): Promise<void> {
+  const item = toolbarItemFor();
   const parsed = await readSettings();
   if (parsed === undefined) {
     await unparseableAlert(item);
@@ -115,10 +114,10 @@ export async function addToolbarItem(settings: OutlineSettings): Promise<void> {
   });
 }
 
-export async function removeToolbarItem(settings: OutlineSettings): Promise<void> {
+export async function removeToolbarItem(): Promise<void> {
   const parsed = await readSettings();
   if (parsed === undefined) {
-    await unparseableAlert(toolbarItemFor(settings));
+    await unparseableAlert(toolbarItemFor());
     return;
   }
 

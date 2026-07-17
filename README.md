@@ -81,7 +81,7 @@ command:
 
 ```jsonc
 "editor.customToolbarItems": [
-  { "title": "Outline", "icon": "sidebar.right", "actionName": "Toggle Outline Sidebar" }
+  { "title": "Outline", "icon": "list.bullet.rectangle.portrait", "actionName": "Toggle Outline Sidebar" }
 ]
 ```
 
@@ -99,10 +99,7 @@ Add an `outline-sidebar` object to your MarkEdit
 {
   "outline-sidebar": {
     "position": "right",          // "right" | "left"
-    "width": 280,                  // pixels (160–600)
     "onLaunch": "remember",        // "remember" last state | "open" always | "closed" always
-    "pushEditor": true,            // shrink the content area when open so nothing hides behind the panel
-    "syncPreviewScroll": true,     // also scroll the preview pane in preview mode
     "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] }
   }
 }
@@ -111,6 +108,9 @@ Add an `outline-sidebar` object to your MarkEdit
 `shortcut.modifiers` may include `"Command"`, `"Shift"`, `"Control"`, and `"Option"`.
 The default is **⇧⌘L** because ⇧⌘O is already used by MarkEdit's built-in Table of
 Contents toolbar item.
+
+The sidebar width is adjusted with the draggable divider and remembered
+automatically.
 
 ## How it works
 

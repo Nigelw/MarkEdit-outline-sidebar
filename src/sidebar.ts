@@ -5,6 +5,7 @@ import { CSS, STYLE_ELEMENT_ID } from './styles';
 import { VISIBLE_STORAGE_KEY, WIDTH_STORAGE_KEY } from './constants';
 import type { OutlineSettings } from './settings';
 
+const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 160;
 
 export class OutlineSidebar {
@@ -25,7 +26,7 @@ export class OutlineSidebar {
 
   constructor(settings: OutlineSettings) {
     this.settings = settings;
-    this.width = settings.width;
+    this.width = DEFAULT_WIDTH;
   }
 
   /** Build the DOM and attach it to the document. Safe to call more than once. */
@@ -278,7 +279,7 @@ export class OutlineSidebar {
     if (Number.isNaN(index)) {
       return;
     }
-    goToHeading(this.headings, index, this.settings.syncPreviewScroll);
+    goToHeading(this.headings, index, true);
   }
 
   private ensureItemVisible(item: HTMLElement): void {
@@ -297,10 +298,6 @@ export class OutlineSidebar {
   // MARK: - Layout & theming
 
   private pushEditor(open: boolean): void {
-    if (!this.settings.pushEditor) {
-      return;
-    }
-
     const width = this.width;
     const right = this.settings.position === 'right';
     const body = document.body.style;
