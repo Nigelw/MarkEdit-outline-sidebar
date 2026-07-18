@@ -1,24 +1,29 @@
 ---
 name: release
-description: Cut a new release of the MarkEdit Outline Sidebar extension — bump the version, build, commit the compiled bundle, tag, push, and publish a GitHub release. Use when the user says "release", "cut a release", "ship a new version", "publish v1.2.0", or wants to make the in-app auto-updater offer a new build.
+description: Cut a new release of the MarkEdit Outline Sidebar extension — bump the version, update the changelog, build, tag, push, and publish a GitHub release with the compiled bundle attached as an asset. Use when the user says "release", "cut a release", "ship a new version", "publish v1.2.0", or wants to make the in-app auto-updater offer a new build.
 ---
 
 # Release the MarkEdit Outline Sidebar
 
 This extension has an in-app self-updater (`src/updater.ts`). Installed copies poll
 `api.github.com/repos/Nigelw/MarkEdit-outline-sidebar/releases/latest`, compare the
-release's tag against their baked-in version, and download the new build from
-**`raw.githubusercontent.com/Nigelw/MarkEdit-outline-sidebar/refs/tags/<tag>/dist/markedit-outline.js`**
-(Method A — the compiled bundle is served straight from the tagged commit).
+release's tag against their baked-in version, and — when a newer one exists — download the
+release's **`markedit-outline.js` asset** (via its `browser_download_url` from the release JSON)
+and overwrite their own script file with it. This is **Method B**: the build is served as a
+GitHub release asset, not from the repo tree.
 
-So a release is only usable by the updater if **three things agree at the tagged commit**:
+So a release is only usable by the updater if **all of these agree**:
 
 1. `package.json` `version` = the new version (this is baked into the bundle at build time).
-2. `dist/markedit-outline.js` is freshly rebuilt from that version and **committed**.
-3. The git tag is `v<version>` and points at the commit containing that rebuilt bundle.
+2. `dist/markedit-outline.js` is freshly rebuilt from that version.
+3. The GitHub release for `v<version>` has a **`markedit-outline.js` asset** that is exactly that
+   freshly-built bundle.
 
-If any of these drift (e.g. tagging without rebuilding), users download stale or mismatched
-code. The steps below keep them in lockstep.
+If any drift (e.g. tagging without rebuilding, or uploading a stale asset), users download
+mismatched code. The steps below keep them in lockstep.
+
+`dist/` is **git-ignored** (a build artifact, not committed) — the release asset is the only
+published copy of the build, and the README points people at the release download.
 
 ## Before starting
 
@@ -68,42 +73,50 @@ code. The steps below keep them in lockstep.
    `grep -c "<new-version>" dist/markedit-outline.js` should be ≥ 1. If it's 0, the build didn't
    pick up the bump — stop and investigate rather than shipping a mismatched build.
 
-6. **Commit** the release files together:
-   `git add package.json CHANGELOG.md dist/markedit-outline.js` then commit as
-   `Release v<version>`. (Include any other intended changes for this release in the same or
-   prior commits — the tag must sit on top of everything the release contains.)
+6. **Commit** the release files:
+   `git add package.json CHANGELOG.md` then commit as `Release v<version>`. (`dist/` is
+   git-ignored, so it isn't committed — it's published as the release asset in step 9 instead.
+   Include any other intended changes for this release in the same or prior commits — the tag must
+   sit on top of everything the release contains.)
 
 7. **Tag** the release commit: `git tag -a v<version> -m "v<version>"` (annotated tag).
 
 8. **Push** the branch and the tag: `git push origin main` and `git push origin v<version>`.
 
-9. **Publish the GitHub release** so `releases/latest` advances (the updater reads *latest*, so an
-   unpublished tag alone won't trigger updates):
-   `gh release create v<version> --title "v<version>" --notes "<changelog section>"`
-   Prefer reusing the confirmed `CHANGELOG.md` section for this version as the release notes (so
-   GitHub and the changelog match); `--generate-notes` is an acceptable fallback. Do **not**
-   attach a binary asset — Method A serves the bundle from the raw tag path, not from release
-   assets.
+9. **Publish the GitHub release with the extension attached as an asset** (this is the file the
+   Method-B updater downloads), which also advances `releases/latest` (the updater reads *latest*,
+   so an unpublished tag alone won't trigger updates):
+   `gh release create v<version> --title "v<version>" --notes "<changelog section>" dist/markedit-outline.js`
+   The trailing `dist/markedit-outline.js` uploads it as an asset named `markedit-outline.js` —
+   the exact name the updater looks for (`UPDATE_ASSET_NAME` in `src/constants.ts`); don't rename
+   it. Prefer reusing the confirmed `CHANGELOG.md` section for this version as the release notes
+   (so GitHub and the changelog match); `--generate-notes` is an acceptable fallback. Only this
+   one asset is attached — the README and CHANGELOG are read from the repo, not bundled.
 
-10. **Verify the updater's download URL resolves** (catches a missing/mis-committed `dist/`):
+10. **Verify the release exposes the asset the updater will download.** Check the API response the
+    updater actually reads (`releases/latest`) contains an asset named `markedit-outline.js`, and
+    that its download URL resolves:
     ```
-    curl -sSfI "https://raw.githubusercontent.com/Nigelw/MarkEdit-outline-sidebar/refs/tags/v<version>/dist/markedit-outline.js" | head -1
+    url=$(curl -sS "https://api.github.com/repos/Nigelw/MarkEdit-outline-sidebar/releases/latest" \
+      | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const a=JSON.parse(d).assets||[];const m=a.find(x=>x.name==='markedit-outline.js');console.log(m?m.browser_download_url:'MISSING')})")
+    echo "asset url: $url"
+    [ "$url" = MISSING ] || curl -sSfI "$url" | head -1
     ```
-    Expect `HTTP/2 200`. A 404 means the built bundle isn't present at that tag — the release will
-    fail to install for users. (raw.githubusercontent can lag a tag push by a few seconds; retry
-    once before treating a 404 as a real problem.)
+    Expect a real URL and `HTTP/2 200`. `MISSING` means the asset wasn't attached (or `latest`
+    hasn't advanced yet) — the release will fail to install for Method-B users; re-check the
+    `gh release create` upload. (The API can lag a publish by a few seconds; retry once.)
 
 ## Report back
 
 Tell the user the released version, the release URL (`gh release view v<version> --web` gives it),
-and the result of the step-10 URL check so they know the auto-updater will serve it.
+and the result of the step-10 asset check so they know the auto-updater will serve it.
 
 ## Notes & gotchas
 
-- **The repo must stay public** for the unauthenticated api.github.com / raw.githubusercontent
-  fetches the updater makes.
-- **Never tag without rebuilding.** The whole scheme relies on the committed `dist/` at the tag
-  matching `package.json`'s version. Step 5 guards this.
+- **The repo must stay public** for the unauthenticated api.github.com / release-asset fetches the
+  updater makes.
+- **Never tag or upload without rebuilding.** The scheme relies on the uploaded `markedit-outline.js`
+  asset matching `package.json`'s version. Step 5 guards the build.
 - The version an *installed* user compares against is the one baked into their old build, so the
   new tag simply needs to be a higher semver than the last release. Skipped/never modes are the
   user's own `update` setting and don't affect how you cut the release.

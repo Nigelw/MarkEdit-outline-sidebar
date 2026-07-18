@@ -25,7 +25,7 @@ export const WIDTH_STORAGE_KEY = 'markedit-outline.width';
 
 /**
  * GitHub repo hosting this extension's releases, in `owner/repo` form. Used to
- * build the update-check URLs below. Keep this in sync with the actual repo the
+ * build the update-check URL below. Keep this in sync with the actual repo the
  * releases live in.
  */
 export const GITHUB_REPO = 'Nigelw/MarkEdit-outline-sidebar';
@@ -34,14 +34,11 @@ export const GITHUB_REPO = 'Nigelw/MarkEdit-outline-sidebar';
 export const LATEST_RELEASE_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 
 /**
- * Base for downloading a built script straight from a tagged commit. The updater
- * appends `refs/tags/<tag>/dist/<file>` to this, so the built
- * `dist/markedit-outline.js` must be committed at each tagged release.
+ * Name of the release asset the updater downloads and installs — the built
+ * script, matching `package.json`'s `name` + `.js`. Each release must attach an
+ * asset with exactly this filename (the release skill uploads `dist/<file>`).
  */
-export const RAW_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/`;
-
-/** Built script filename, matching `package.json`'s `name` + `.js`. */
-export const DIST_FILENAME = 'markedit-outline.js';
+export const UPDATE_ASSET_NAME = 'markedit-outline.js';
 
 /** localStorage key holding the epoch-ms timestamp of the last update check. */
 export const LAST_CHECK_STORAGE_KEY = 'markedit-outline.updater.last-check';

@@ -1,22 +1,18 @@
 import { MarkEdit } from 'markedit-api';
 import {
-  DIST_FILENAME,
   LAST_CHECK_STORAGE_KEY,
   LATEST_RELEASE_URL,
-  RAW_BASE_URL,
   SKIPPED_VERSIONS_STORAGE_KEY,
+  UPDATE_ASSET_NAME,
 } from './constants';
 import type { UpdateBehavior } from './settings';
 
 /**
  * Self-updater: on launch (and on demand from the menu) it asks GitHub for the
  * latest release, and — depending on the `update` setting — silently installs
- * it, prompts first, or does nothing. Installing means overwriting this very
- * script file with the built `dist/markedit-outline.js` from the release's tag;
- * the new code takes effect on the next MarkEdit launch.
- *
- * Modelled on MarkEdit-preview's updater, adapted to this extension's settings
- * and alert conventions.
+ * it, prompts first, or does nothing. Installing means downloading the release's
+ * `markedit-outline.js` asset (Method B) and overwriting this very script file
+ * with it; the new code takes effect on the next MarkEdit launch.
  */
 
 /** Version baked in at build time (see globals.d.ts / vite.config.mts). */
@@ -25,10 +21,16 @@ const CURRENT_VERSION = __EXTENSION_VERSION__;
 /** Don't auto-check more than once per day (manual checks bypass this). */
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
+interface ReleaseAsset {
+  name: string;
+  browser_download_url: string;
+}
+
 interface Release {
   tag_name: string;
   name?: string;
   html_url?: string;
+  assets?: ReleaseAsset[];
 }
 
 /** Parse `"v1.2.3"` / `"1.2.3"` into `[1, 2, 3]`, or `undefined` if unparseable. */
@@ -83,18 +85,26 @@ async function fetchLatestRelease(): Promise<Release | undefined> {
   return typeof json.tag_name === 'string' ? (json as Release) : undefined;
 }
 
-/** Download the built script for `tag` and overwrite this script file with it. */
-async function downloadAndInstall(tag: string): Promise<boolean> {
+/**
+ * Download the release's `markedit-outline.js` asset and overwrite this script
+ * file with it. Returns false if the release has no such asset or the download
+ * or write fails.
+ */
+async function downloadAndInstall(release: Release): Promise<boolean> {
   const path = __FILE_PATH__;
   if (typeof path !== 'string') {
     console.error('Outline Sidebar updater: unknown script path, cannot install.');
     return false;
   }
-  const url = `${RAW_BASE_URL}refs/tags/${encodeURIComponent(tag)}/dist/${DIST_FILENAME}`;
+  const asset = release.assets?.find((a) => a.name === UPDATE_ASSET_NAME);
+  if (asset === undefined) {
+    console.error(`Outline Sidebar updater: release ${release.tag_name} has no ${UPDATE_ASSET_NAME} asset.`);
+    return false;
+  }
   try {
-    const response = await fetch(url);
+    const response = await fetch(asset.browser_download_url);
     if (!response.ok) {
-      console.error(`Outline Sidebar updater: failed to download ${url} (${response.status}).`);
+      console.error(`Outline Sidebar updater: failed to download ${asset.browser_download_url} (${response.status}).`);
       return false;
     }
     const code = await response.text();
@@ -106,7 +116,7 @@ async function downloadAndInstall(tag: string): Promise<boolean> {
 }
 
 async function installAndReport(release: Release): Promise<void> {
-  const ok = await downloadAndInstall(release.tag_name);
+  const ok = await downloadAndInstall(release);
   await MarkEdit.showAlert(
     ok
       ? {

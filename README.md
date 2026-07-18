@@ -6,6 +6,8 @@ MarkEdit features a Table of Contents as an optional **toolbar popover** (⇧⌘
 
 ![The Outline Sidebar in MarkEdit, listing a document's headings with the current section highlighted](assets/screenshot.png)
 
+**[⬇ Download the latest release](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases/latest)** — then see [Install](#install) below.
+
 ## Features
 
 - **Sidebar** listing every heading, indented by level, with the current section highlighted as you move the caret.
@@ -21,13 +23,13 @@ MarkEdit features a Table of Contents as an optional **toolbar popover** (⇧⌘
 
 ## Install
 
-**Prebuilt:** copy `dist/markedit-outline.js` into MarkEdit's scripts folder:
+**Download:** grab `markedit-outline.js` from the [latest release](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases/latest) (direct link: [`markedit-outline.js`](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases/latest/download/markedit-outline.js)) and copy it into MarkEdit's scripts folder:
 
 ```
 ~/Library/Containers/app.cyan.markedit/Data/Documents/scripts/
 ```
 
-then relaunch MarkEdit.
+then relaunch MarkEdit. After that the extension [keeps itself up to date](#staying-up-to-date) — no need to download it again by hand.
 
 **From source:**
 
