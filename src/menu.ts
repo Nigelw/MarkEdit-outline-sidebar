@@ -1,5 +1,5 @@
 import { MarkEdit } from 'markedit-api';
-import { TOGGLE_ACTION_TITLE } from './constants';
+import { TOGGLE_ACTION_TITLE, REPO_URL } from './constants';
 import { addToolbarItem, removeToolbarItem } from './toolbar';
 import { setSidebarPosition } from './position';
 import { checkForUpdates } from './updater';
@@ -48,9 +48,28 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
       },
       { separator: true },
       {
+        title: 'Visit GitHub Project',
+        action: () => openURL(REPO_URL),
+      },
+      {
         title: 'Check for Updates…',
         action: () => void checkForUpdates(settings.update, true),
       },
     ],
   });
+}
+
+/**
+ * Open a URL in the user's default browser. MarkEdit runs in a WKWebView whose
+ * navigation delegate opens external (http/https) links externally, so clicking
+ * a transient anchor hands the URL off to the browser.
+ */
+function openURL(url: string): void {
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.target = '_blank';
+  anchor.rel = 'noopener noreferrer';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 }

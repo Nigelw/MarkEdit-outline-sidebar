@@ -30,6 +30,9 @@ export const WIDTH_STORAGE_KEY = 'markedit-outline.width';
  */
 export const GITHUB_REPO = 'Nigelw/MarkEdit-outline-sidebar';
 
+/** Human-facing GitHub project page, linked from the Extensions menu. */
+export const REPO_URL = `https://github.com/${GITHUB_REPO}`;
+
 /** GitHub API endpoint returning the metadata of the latest published release. */
 export const LATEST_RELEASE_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 
