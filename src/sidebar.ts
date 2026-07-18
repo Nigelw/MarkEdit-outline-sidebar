@@ -1,6 +1,6 @@
 import { MarkEdit } from 'markedit-api';
 import { extractHeadings, activeHeadingIndex, type Heading } from './toc';
-import { goToHeading } from './navigation';
+import { goToHeading, activePreviewHeadingIndex } from './navigation';
 import { CSS, STYLE_ELEMENT_ID } from './styles';
 import { VISIBLE_STORAGE_KEY, WIDTH_STORAGE_KEY } from './constants';
 import type { OutlineSettings } from './settings';
@@ -23,6 +23,9 @@ export class OutlineSidebar {
   private headings: Heading[] = [];
   private items: HTMLElement[] = [];
   private activeIndex = -1;
+
+  private readonly scrollHandler = (event: Event) => this.onDocumentScroll(event);
+  private spyScheduled = false;
 
   constructor(settings: OutlineSettings) {
     this.settings = settings;
@@ -78,6 +81,9 @@ export class OutlineSidebar {
     this.refresh();
     this.root.classList.add('meo-open');
     this.pushEditor(true);
+    // Capture phase so we catch scroll from the preview's own container, which
+    // doesn't bubble. Passive: we never call preventDefault.
+    document.addEventListener('scroll', this.scrollHandler, { capture: true, passive: true });
     this.persistVisibility();
   }
 
@@ -88,6 +94,7 @@ export class OutlineSidebar {
     this.opened = false;
     this.root.classList.remove('meo-open');
     this.pushEditor(false);
+    document.removeEventListener('scroll', this.scrollHandler, { capture: true });
     this.persistVisibility();
   }
 
@@ -124,6 +131,12 @@ export class OutlineSidebar {
     this.headings = extractHeadings(MarkEdit.editorView.state);
     this.renderList();
     this.updateActive();
+    // In preview mode the caret is stale, so prefer the preview's scroll position
+    // for the initial highlight when a preview is visible.
+    const previewIndex = activePreviewHeadingIndex(this.headings);
+    if (previewIndex !== undefined) {
+      this.setActive(previewIndex);
+    }
   }
 
   /** Update which item is highlighted based on the current caret position. */
@@ -133,19 +146,61 @@ export class OutlineSidebar {
     }
 
     const head = MarkEdit.editorView.state.selection.main.head;
-    const next = activeHeadingIndex(this.headings, head);
-    if (next === this.activeIndex) {
+    this.setActive(activeHeadingIndex(this.headings, head));
+  }
+
+  /**
+   * Highlight the item at `index` (or clear the highlight when `index < 0`),
+   * scrolling the list to keep it visible. Idempotent: re-setting the current
+   * index is a no-op, so the caret-driven and preview-scroll-driven callers can
+   * both feed it without fighting each other.
+   */
+  private setActive(index: number): void {
+    if (index === this.activeIndex) {
       return;
     }
 
     if (this.activeIndex >= 0 && this.items[this.activeIndex]) {
       this.items[this.activeIndex].classList.remove('meo-active');
     }
-    this.activeIndex = next;
-    if (next >= 0 && this.items[next]) {
-      this.items[next].classList.add('meo-active');
-      this.ensureItemVisible(this.items[next]);
+    this.activeIndex = index;
+    if (index >= 0 && this.items[index]) {
+      this.items[index].classList.add('meo-active');
+      this.ensureItemVisible(this.items[index]);
     }
+  }
+
+  /**
+   * Track the preview's scroll position so the highlighted item follows what
+   * you're reading in preview / side-by-side mode (where the caret doesn't move).
+   * A single capture-phase listener on `document` catches scroll events from
+   * whichever preview container is live, so it survives mode switches and preview
+   * re-renders without any per-element observer bookkeeping.
+   */
+  private onDocumentScroll(event: Event): void {
+    if (!this.opened || this.items.length === 0) {
+      return;
+    }
+    // Ignore the sidebar list's own scrolling.
+    const target = event.target as Node | null;
+    if (target instanceof HTMLElement && target.closest('.meo-sidebar')) {
+      return;
+    }
+    // Coalesce bursts of scroll events into one recompute per frame.
+    if (this.spyScheduled) {
+      return;
+    }
+    this.spyScheduled = true;
+    requestAnimationFrame(() => {
+      this.spyScheduled = false;
+      if (!this.opened) {
+        return;
+      }
+      const next = activePreviewHeadingIndex(this.headings);
+      if (next !== undefined) {
+        this.setActive(next);
+      }
+    });
   }
 
   // MARK: - DOM construction

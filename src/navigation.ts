@@ -60,6 +60,62 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
   }
 }
 
+/**
+ * The TOC index of the heading the preview is currently scrolled to — the last
+ * heading whose top has passed a trigger line just below the top of the preview
+ * viewport (classic scroll-spy semantics). Returns:
+ * - a heading index (>= 0) for the section being read,
+ * - -1 when scrolled above the first heading (nothing active, matching the
+ *   caret-driven behavior),
+ * - `undefined` when there's no visible preview to spy on, so callers can leave
+ *   the current highlight untouched.
+ */
+export function activePreviewHeadingIndex(headings: Heading[]): number | undefined {
+  const previewHeadings = getVisiblePreviewHeadings();
+  if (previewHeadings.length === 0) {
+    return undefined;
+  }
+
+  const container = getScrollContainer(previewHeadings[0]);
+  const containerTop = container?.getBoundingClientRect().top ?? 0;
+  // A small trigger line below the viewport top: a heading counts as "current"
+  // once its top crosses this line, so the section you're reading lights up a
+  // touch before its heading reaches the very top edge.
+  const triggerLine = containerTop + 12;
+
+  // When the preview is scrolled to the bottom a short trailing section can never
+  // reach the trigger line, so pin the last heading as active there.
+  if (container !== undefined) {
+    const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 2;
+    if (atBottom) {
+      return toTocIndex(headings, previewHeadings, previewHeadings.length - 1);
+    }
+  }
+
+  let current = -1;
+  for (let i = 0; i < previewHeadings.length; i++) {
+    if (previewHeadings[i].getBoundingClientRect().top <= triggerLine + 1) {
+      current = i;
+    } else {
+      break;
+    }
+  }
+
+  return current < 0 ? -1 : toTocIndex(headings, previewHeadings, current);
+}
+
+/** Map a position in the visible preview headings back to a TOC index. */
+function toTocIndex(headings: Heading[], previewHeadings: HTMLElement[], previewPos: number): number {
+  // Preferred: 1:1 positional match (rendered order == TOC order).
+  if (previewHeadings.length === headings.length) {
+    return previewPos;
+  }
+  // Fallback: match on normalized heading text.
+  const wanted = normalize(previewHeadings[previewPos].textContent ?? '');
+  const found = headings.findIndex((h) => normalize(h.title) === wanted);
+  return found;
+}
+
 function isPreviewOverlayActive(): boolean {
   const overlay = document.querySelector<HTMLElement>('.markdown-body.overlay');
   return overlay !== null && isDisplayed(overlay);
