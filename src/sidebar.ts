@@ -5,6 +5,7 @@ import {
   activeEditorHeadingIndex,
   activePreviewHeadingIndex,
   isPreviewOverlayActive,
+  previewModeSignature,
 } from './navigation';
 import { CSS, STYLE_ELEMENT_ID } from './styles';
 import { VISIBLE_STORAGE_KEY, WIDTH_STORAGE_KEY } from './constants';
@@ -31,6 +32,10 @@ export class OutlineSidebar {
 
   private readonly scrollHandler = (event: Event) => this.onDocumentScroll(event);
   private spyScheduled = false;
+
+  private modeObserver?: MutationObserver;
+  private modeSignature = 'edit';
+  private modeCheckScheduled = false;
 
   constructor(settings: OutlineSettings) {
     this.settings = settings;
@@ -89,6 +94,16 @@ export class OutlineSidebar {
     // Capture phase so we catch scroll from the preview's own container, which
     // doesn't bubble. Passive: we never call preventDefault.
     document.addEventListener('scroll', this.scrollHandler, { capture: true, passive: true });
+    // Switching edit/preview modes fires no scroll or caret event, so watch the
+    // DOM for the preview surface appearing/disappearing and re-seed then.
+    this.modeSignature = previewModeSignature();
+    this.modeObserver = new MutationObserver(() => this.scheduleModeCheck());
+    this.modeObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+    });
     this.persistVisibility();
   }
 
@@ -100,6 +115,8 @@ export class OutlineSidebar {
     this.root.classList.remove('meo-open');
     this.pushEditor(false);
     document.removeEventListener('scroll', this.scrollHandler, { capture: true });
+    this.modeObserver?.disconnect();
+    this.modeObserver = undefined;
     this.persistVisibility();
   }
 
@@ -231,6 +248,29 @@ export class OutlineSidebar {
       return activeEditorHeadingIndex(this.headings);
     }
     return activePreviewHeadingIndex(this.headings) ?? this.activeIndex;
+  }
+
+  /**
+   * Re-seed the highlight when the editor/preview layout changes. The observer
+   * fires on unrelated DOM churn too (typing, preview re-renders), so this is
+   * rAF-coalesced and only acts when the mode signature actually changes.
+   */
+  private scheduleModeCheck(): void {
+    if (this.modeCheckScheduled) {
+      return;
+    }
+    this.modeCheckScheduled = true;
+    requestAnimationFrame(() => {
+      this.modeCheckScheduled = false;
+      if (!this.opened) {
+        return;
+      }
+      const signature = previewModeSignature();
+      if (signature !== this.modeSignature) {
+        this.modeSignature = signature;
+        this.updateActive();
+      }
+    });
   }
 
   // MARK: - DOM construction

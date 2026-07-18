@@ -72,15 +72,33 @@ export function activeEditorHeadingIndex(headings: Heading[]): number {
     return -1;
   }
   const view = MarkEdit.editorView;
-  const rect = view.scrollDOM.getBoundingClientRect();
+  const scroller = view.scrollDOM;
+  const rect = scroller.getBoundingClientRect();
+
+  // At the very bottom a short trailing section can never reach the trigger line,
+  // so pin the last heading there (mirrors the preview's bottom handling).
+  if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2) {
+    return headings.length - 1;
+  }
+
   const typewriterMode = window.config?.typewriterMode === true;
-  const refScreenY = rect.top + (typewriterMode ? rect.height / 2 : 12);
+  const refScreenY = rect.top + (typewriterMode ? rect.height / 2 : triggerOffset(rect.height));
   // `lineBlockAtHeight` measures from the top of the document content, whose
   // screen position is `documentTop`; convert the screen reference line into
   // that coordinate space.
   const height = Math.max(0, refScreenY - view.documentTop);
   const pos = view.lineBlockAtHeight(height).from;
   return activeHeadingIndex(headings, pos);
+}
+
+/**
+ * How far below the top of a pane the scroll-spy trigger line sits: a heading
+ * becomes active once it rises past this line. Set to a fraction of the viewport
+ * (clamped) so the highlight switches when a heading nears the top, rather than
+ * only when it's pinned to the very edge.
+ */
+function triggerOffset(viewportHeight: number): number {
+  return Math.min(Math.max(viewportHeight * 0.2, 48), 140);
 }
 
 /**
@@ -100,11 +118,12 @@ export function activePreviewHeadingIndex(headings: Heading[]): number | undefin
   }
 
   const container = getScrollContainer(previewHeadings[0]);
-  const containerTop = container?.getBoundingClientRect().top ?? 0;
-  // A small trigger line below the viewport top: a heading counts as "current"
-  // once its top crosses this line, so the section you're reading lights up a
-  // touch before its heading reaches the very top edge.
-  const triggerLine = containerTop + 12;
+  const rect = container?.getBoundingClientRect();
+  const containerTop = rect?.top ?? 0;
+  // A trigger line below the viewport top: a heading counts as "current" once
+  // its top crosses this line, so the section you're reading lights up while its
+  // heading is still near the top rather than only at the very edge.
+  const triggerLine = containerTop + triggerOffset(rect?.height ?? window.innerHeight);
 
   // When the preview is scrolled to the bottom a short trailing section can never
   // reach the trigger line, so pin the last heading as active there.
@@ -142,6 +161,20 @@ function toTocIndex(headings: Heading[], previewHeadings: HTMLElement[], preview
 export function isPreviewOverlayActive(): boolean {
   const overlay = document.querySelector<HTMLElement>('.markdown-body.overlay');
   return overlay !== null && isDisplayed(overlay);
+}
+
+/**
+ * A cheap signature of the current editor/preview layout: `'overlay'` for
+ * full-screen preview, `'split'` for a side-by-side preview, `'edit'` for no
+ * visible preview. Switching modes fires no event, so the sidebar watches the
+ * DOM and re-seeds the highlight whenever this value changes.
+ */
+export function previewModeSignature(): 'overlay' | 'split' | 'edit' {
+  if (isPreviewOverlayActive()) {
+    return 'overlay';
+  }
+  const body = document.querySelector<HTMLElement>('.markdown-body');
+  return body !== null && isDisplayed(body) ? 'split' : 'edit';
 }
 
 /**
