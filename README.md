@@ -51,10 +51,11 @@ The extension exposes the toggle three ways:
 
 ### Adding the toolbar button
 
-**The easy way:** run *Extensions → Outline Sidebar → **Add Toolbar Button to settings.json…***. It merges the entry into your `settings.json` (leaving any existing items intact). Then:
+**The easy way:**
 
-1. **Restart MarkEdit.**
-2. **View → Customize Toolbar…** and drag the **Outline** item into the toolbar.
+1. Go to Extensions → Outline Sidebar → **Add Toolbar Button to settings.json…**. This updates your `settings.json` (leaving any existing items intact).
+2. **Restart MarkEdit.**
+3. **View → Customize Toolbar…** and drag the **Outline** item into the toolbar.
 
 ![Customize Toolbar showing the Outline item being dragged into the toolbar](assets/customize-toolbar.png)
 
