@@ -1,7 +1,7 @@
 import { MarkEdit } from 'markedit-api';
 import { EditorView } from '@codemirror/view';
 import { EditorSelection } from '@codemirror/state';
-import type { Heading } from './toc';
+import { activeHeadingIndex, type Heading } from './toc';
 
 /**
  * Navigate to a heading. The editor caret is moved and the editor is scrolled to
@@ -60,9 +60,105 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
   }
 }
 
-function isPreviewOverlayActive(): boolean {
+/**
+ * The TOC index of the heading at the editor's reference line — the section you
+ * are currently looking at in edit / side-by-side mode. The reference line sits
+ * near the top of the editor viewport, or at its vertical center in typewriter
+ * mode (where MarkEdit pins the active line, matching how `goToHeading` scrolls).
+ * Returns -1 when scrolled above the first heading.
+ */
+export function activeEditorHeadingIndex(headings: Heading[]): number {
+  if (headings.length === 0) {
+    return -1;
+  }
+  const view = MarkEdit.editorView;
+  const rect = view.scrollDOM.getBoundingClientRect();
+
+  const typewriterMode = window.config?.typewriterMode === true;
+  const refScreenY = rect.top + (typewriterMode ? rect.height / 2 : triggerOffset(rect.height));
+  // `lineBlockAtHeight` measures from the top of the document content, whose
+  // screen position is `documentTop`; convert the screen reference line into
+  // that coordinate space.
+  const height = Math.max(0, refScreenY - view.documentTop);
+  const pos = view.lineBlockAtHeight(height).from;
+  return activeHeadingIndex(headings, pos);
+}
+
+/**
+ * How far below the top of a pane the scroll-spy trigger line sits: a heading
+ * becomes active once it rises past this line. Set to a fraction of the viewport
+ * (clamped) so the highlight switches when a heading nears the top, rather than
+ * only when it's pinned to the very edge.
+ */
+function triggerOffset(viewportHeight: number): number {
+  return Math.min(Math.max(viewportHeight * 0.1, 48), 140);
+}
+
+/**
+ * The TOC index of the heading the preview is currently scrolled to — the last
+ * heading whose top has passed a trigger line just below the top of the preview
+ * viewport (classic scroll-spy semantics). Returns:
+ * - a heading index (>= 0) for the section being read,
+ * - -1 when scrolled above the first heading (nothing active, matching the
+ *   caret-driven behavior),
+ * - `undefined` when there's no visible preview to spy on, so callers can leave
+ *   the current highlight untouched.
+ */
+export function activePreviewHeadingIndex(headings: Heading[]): number | undefined {
+  const previewHeadings = getVisiblePreviewHeadings();
+  if (previewHeadings.length === 0) {
+    return undefined;
+  }
+
+  const container = getScrollContainer(previewHeadings[0]);
+  const rect = container?.getBoundingClientRect();
+  const containerTop = rect?.top ?? 0;
+  // A trigger line below the viewport top: a heading counts as "current" once
+  // its top crosses this line, so the section you're reading lights up while its
+  // heading is still near the top rather than only at the very edge.
+  const triggerLine = containerTop + triggerOffset(rect?.height ?? window.innerHeight);
+
+  let current = -1;
+  for (let i = 0; i < previewHeadings.length; i++) {
+    if (previewHeadings[i].getBoundingClientRect().top <= triggerLine + 1) {
+      current = i;
+    } else {
+      break;
+    }
+  }
+
+  return current < 0 ? -1 : toTocIndex(headings, previewHeadings, current);
+}
+
+/** Map a position in the visible preview headings back to a TOC index. */
+function toTocIndex(headings: Heading[], previewHeadings: HTMLElement[], previewPos: number): number {
+  // Preferred: 1:1 positional match (rendered order == TOC order).
+  if (previewHeadings.length === headings.length) {
+    return previewPos;
+  }
+  // Fallback: match on normalized heading text.
+  const wanted = normalize(previewHeadings[previewPos].textContent ?? '');
+  const found = headings.findIndex((h) => normalize(h.title) === wanted);
+  return found;
+}
+
+export function isPreviewOverlayActive(): boolean {
   const overlay = document.querySelector<HTMLElement>('.markdown-body.overlay');
   return overlay !== null && isDisplayed(overlay);
+}
+
+/**
+ * A cheap signature of the current editor/preview layout: `'overlay'` for
+ * full-screen preview, `'split'` for a side-by-side preview, `'edit'` for no
+ * visible preview. Switching modes fires no event, so the sidebar watches the
+ * DOM and re-seeds the highlight whenever this value changes.
+ */
+export function previewModeSignature(): 'overlay' | 'split' | 'edit' {
+  if (isPreviewOverlayActive()) {
+    return 'overlay';
+  }
+  const body = document.querySelector<HTMLElement>('.markdown-body');
+  return body !== null && isDisplayed(body) ? 'split' : 'edit';
 }
 
 /**

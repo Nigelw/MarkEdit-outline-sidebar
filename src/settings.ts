@@ -7,6 +7,14 @@ export type KeyModifier = 'Shift' | 'Control' | 'Command' | 'Option';
 export type Position = 'left' | 'right';
 
 /**
+ * What drives the highlighted outline item:
+ * - `scroll`: the section currently in view (the visible viewport in every mode)
+ * - `insertionPoint`: the section the cursor is in when editing; still the
+ *   visible section in preview, where there is no cursor to follow
+ */
+export type HighlightMode = 'scroll' | 'insertionPoint';
+
+/**
  * What the sidebar does on launch:
  * - `remember`: restore the last open/closed state (closed on a fresh install)
  * - `open`: always start open
@@ -32,6 +40,8 @@ export interface OutlineSettings {
   position: Position;
   /** Whether the sidebar is shown on launch: remember last state, always open, or always closed. */
   onLaunch: LaunchBehavior;
+  /** What drives the highlighted item: the visible section (`scroll`) or the cursor (`insertionPoint`). */
+  highlightMode: HighlightMode;
   /** Keyboard shortcut for the "Toggle Outline Sidebar" menu command. */
   shortcut: Shortcut;
   /** How automatic update checking behaves. */
@@ -43,6 +53,7 @@ const UPDATE_BEHAVIORS: UpdateBehavior[] = ['automatic', 'notify', 'never'];
 const DEFAULTS: OutlineSettings = {
   position: 'right',
   onLaunch: 'remember',
+  highlightMode: 'scroll',
   // ⇧⌘L by default — the native Table of Contents already uses ⇧⌘O.
   shortcut: { key: 'l', modifiers: ['Command', 'Shift'] },
   update: 'notify',
@@ -85,6 +96,7 @@ export function loadSettings(): OutlineSettings {
   return {
     position: raw.position === 'left' ? 'left' : DEFAULTS.position,
     onLaunch: raw.onLaunch === 'open' || raw.onLaunch === 'closed' ? raw.onLaunch : DEFAULTS.onLaunch,
+    highlightMode: raw.highlightMode === 'insertionPoint' ? 'insertionPoint' : DEFAULTS.highlightMode,
     shortcut,
     update: UPDATE_BEHAVIORS.includes(raw.update as UpdateBehavior) ? (raw.update as UpdateBehavior) : DEFAULTS.update,
   };

@@ -1,9 +1,15 @@
 import { MarkEdit } from 'markedit-api';
 import { extractHeadings, activeHeadingIndex, type Heading } from './toc';
-import { goToHeading } from './navigation';
+import {
+  goToHeading,
+  activeEditorHeadingIndex,
+  activePreviewHeadingIndex,
+  isPreviewOverlayActive,
+  previewModeSignature,
+} from './navigation';
 import { CSS, STYLE_ELEMENT_ID } from './styles';
 import { VISIBLE_STORAGE_KEY, WIDTH_STORAGE_KEY } from './constants';
-import type { OutlineSettings } from './settings';
+import type { HighlightMode, OutlineSettings } from './settings';
 
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 160;
@@ -23,6 +29,13 @@ export class OutlineSidebar {
   private headings: Heading[] = [];
   private items: HTMLElement[] = [];
   private activeIndex = -1;
+
+  private readonly scrollHandler = (event: Event) => this.onDocumentScroll(event);
+  private spyScheduled = false;
+
+  private modeObserver?: MutationObserver;
+  private modeSignature = 'edit';
+  private modeCheckScheduled = false;
 
   constructor(settings: OutlineSettings) {
     this.settings = settings;
@@ -78,6 +91,19 @@ export class OutlineSidebar {
     this.refresh();
     this.root.classList.add('meo-open');
     this.pushEditor(true);
+    // Capture phase so we catch scroll from the preview's own container, which
+    // doesn't bubble. Passive: we never call preventDefault.
+    document.addEventListener('scroll', this.scrollHandler, { capture: true, passive: true });
+    // Switching edit/preview modes fires no scroll or caret event, so watch the
+    // DOM for the preview surface appearing/disappearing and re-seed then.
+    this.modeSignature = previewModeSignature();
+    this.modeObserver = new MutationObserver(() => this.scheduleModeCheck());
+    this.modeObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+    });
     this.persistVisibility();
   }
 
@@ -88,6 +114,9 @@ export class OutlineSidebar {
     this.opened = false;
     this.root.classList.remove('meo-open');
     this.pushEditor(false);
+    document.removeEventListener('scroll', this.scrollHandler, { capture: true });
+    this.modeObserver?.disconnect();
+    this.modeObserver = undefined;
     this.persistVisibility();
   }
 
@@ -126,26 +155,160 @@ export class OutlineSidebar {
     this.updateActive();
   }
 
-  /** Update which item is highlighted based on the current caret position. */
+  /**
+   * Highlight the section currently in view. One rule for every mode: the item
+   * that matches the reference line of the pane you're looking at — the preview
+   * when it's showing full-screen, otherwise the editor viewport. The caret does
+   * not drive the highlight, so it can't drift out of step with what's on screen.
+   */
   updateActive(): void {
     if (!this.mounted || !this.opened || this.items.length === 0) {
       return;
     }
+    this.setActive(this.activeInView());
+  }
 
-    const head = MarkEdit.editorView.state.selection.main.head;
-    const next = activeHeadingIndex(this.headings, head);
-    if (next === this.activeIndex) {
+  /** The active heading index for whichever pane is the visible surface. */
+  private activeInView(): number {
+    if (isPreviewOverlayActive()) {
+      const preview = activePreviewHeadingIndex(this.headings);
+      // Fall back to the editor only when there's genuinely no preview to read
+      // (undefined); -1 legitimately means "scrolled above the first heading".
+      return preview ?? this.activeInEditor();
+    }
+    return this.activeInEditor();
+  }
+
+  /**
+   * The active heading for the editor pane, per the highlight mode: the section
+   * the cursor sits in (`insertionPoint`) or the section at the top of the
+   * viewport (`scroll`). Preview always follows scroll — there's no cursor there.
+   */
+  private activeInEditor(): number {
+    if (this.settings.highlightMode === 'insertionPoint') {
+      return activeHeadingIndex(this.headings, MarkEdit.editorView.state.selection.main.head);
+    }
+    return activeEditorHeadingIndex(this.headings);
+  }
+
+  /** Switch the highlight mode live and re-seed the highlight under the new rule. */
+  setHighlightMode(mode: HighlightMode): void {
+    if (this.settings.highlightMode === mode) {
+      return;
+    }
+    this.settings.highlightMode = mode;
+    this.updateActive();
+  }
+
+  /**
+   * Re-evaluate on a cursor move. Only relevant in `insertionPoint` mode with
+   * the editor visible; in `scroll` mode the cursor doesn't drive the highlight,
+   * and in preview there's no cursor (reacting there would fight preview nav).
+   */
+  onSelectionChange(): void {
+    if (this.settings.highlightMode !== 'insertionPoint' || isPreviewOverlayActive()) {
+      return;
+    }
+    this.updateActive();
+  }
+
+  /**
+   * Highlight the item at `index` (or clear the highlight when `index < 0`),
+   * scrolling the list to keep it visible. Idempotent: re-setting the current
+   * index is a no-op, so the caret-driven and preview-scroll-driven callers can
+   * both feed it without fighting each other.
+   */
+  private setActive(index: number): void {
+    if (index === this.activeIndex) {
       return;
     }
 
     if (this.activeIndex >= 0 && this.items[this.activeIndex]) {
       this.items[this.activeIndex].classList.remove('meo-active');
     }
-    this.activeIndex = next;
-    if (next >= 0 && this.items[next]) {
-      this.items[next].classList.add('meo-active');
-      this.ensureItemVisible(this.items[next]);
+    this.activeIndex = index;
+    if (index >= 0 && this.items[index]) {
+      this.items[index].classList.add('meo-active');
+      this.ensureItemVisible(this.items[index]);
     }
+  }
+
+  /**
+   * Track the preview's scroll position so the highlighted item follows what
+   * you're reading in preview / side-by-side mode (where the caret doesn't move).
+   * A single capture-phase listener on `document` catches scroll events from
+   * whichever preview container is live, so it survives mode switches and preview
+   * re-renders without any per-element observer bookkeeping.
+   */
+  private onDocumentScroll(event: Event): void {
+    if (!this.opened || this.items.length === 0) {
+      return;
+    }
+    // Ignore the sidebar list's own scrolling.
+    const target = event.target;
+    if (target instanceof HTMLElement && target.closest('.meo-sidebar')) {
+      return;
+    }
+    // Coalesce bursts of scroll events into one recompute per frame.
+    if (this.spyScheduled) {
+      return;
+    }
+    this.spyScheduled = true;
+    requestAnimationFrame(() => {
+      this.spyScheduled = false;
+      if (!this.opened) {
+        return;
+      }
+      this.setActive(this.activeForScroll(target));
+    });
+  }
+
+  /**
+   * Resolve the active heading for a scroll coming from `target`, routing to the
+   * pane that actually scrolled so the two panes don't fight in side-by-side.
+   * Returns the current index unchanged (a no-op) when the scroll shouldn't move
+   * the highlight — e.g. the hidden editor scrolling behind a full-screen preview.
+   */
+  private activeForScroll(target: EventTarget | null): number {
+    const scroller = MarkEdit.editorView.scrollDOM;
+    const fromEditor = target instanceof Node && (target === scroller || scroller.contains(target));
+    if (fromEditor) {
+      // In full-screen preview the editor is hidden behind the overlay yet still
+      // emits scroll (e.g. when navigating); the preview is what you see.
+      if (isPreviewOverlayActive()) {
+        return this.activeIndex;
+      }
+      // In insertion-point mode, scrolling the editor without moving the cursor
+      // must not move the highlight — the cursor still decides.
+      if (this.settings.highlightMode === 'insertionPoint') {
+        return this.activeIndex;
+      }
+      return activeEditorHeadingIndex(this.headings);
+    }
+    return activePreviewHeadingIndex(this.headings) ?? this.activeIndex;
+  }
+
+  /**
+   * Re-seed the highlight when the editor/preview layout changes. The observer
+   * fires on unrelated DOM churn too (typing, preview re-renders), so this is
+   * rAF-coalesced and only acts when the mode signature actually changes.
+   */
+  private scheduleModeCheck(): void {
+    if (this.modeCheckScheduled) {
+      return;
+    }
+    this.modeCheckScheduled = true;
+    requestAnimationFrame(() => {
+      this.modeCheckScheduled = false;
+      if (!this.opened) {
+        return;
+      }
+      const signature = previewModeSignature();
+      if (signature !== this.modeSignature) {
+        this.modeSignature = signature;
+        this.updateActive();
+      }
+    });
   }
 
   // MARK: - DOM construction
@@ -283,6 +446,8 @@ export class OutlineSidebar {
     if (Number.isNaN(index)) {
       return;
     }
+    // Direct manipulation wins immediately; the scroll-spy then keeps it there.
+    this.setActive(index);
     goToHeading(this.headings, index, true);
   }
 

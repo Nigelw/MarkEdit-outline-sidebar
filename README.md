@@ -10,7 +10,7 @@ MarkEdit features a Table of Contents as an optional **toolbar popover** (⇧⌘
 
 ## Features
 
-- **Sidebar** listing every heading, indented by level, with the current section highlighted as you move the caret.
+- **Sidebar** listing every heading, indented by level, with the current section highlighted.
 - **Dock left or right**: position the sidebar on either side of the window.
 - **Resizable**: drag the divider to resize it.
 - **Click to navigate**: clicking a heading scrolls the editor to it and moves the caret there.
@@ -80,6 +80,13 @@ The sidebar can dock to either edge of the window. Switch sides from *Extensions
 
 Resize the sidebar by dragging the divider between it and the editor — the width is remembered automatically.
 
+## Highlighting
+
+The current section is highlighted in the outline as you move through the document. There are two highlighting modes, switchable live from *Extensions → Outline Sidebar → **Highlight Follows Scroll** / **Highlight Follows Insertion Point*** (or with the `highlightMode` setting below):
+
+- **Follows Scroll** *(default)* — the highlight tracks the section you're viewing, following the editor or preview as you scroll.
+- **Follows Insertion Point** — the highlight tracks the section your cursor is in while editing. In preview there's no cursor, so it still follows the scroll position.
+
 ## Configuration
 
 Add an `extension.markeditOutlineSidebar` object to your MarkEdit [`settings.json`](https://github.com/MarkEdit-app/MarkEdit/wiki/Customization#advanced-settings) (in the same `Documents` folder). The `extension.` prefix is required by MarkEdit's [settings schema](https://github.com/MarkEdit-app/schemas). All fields are optional:
@@ -89,6 +96,7 @@ Add an `extension.markeditOutlineSidebar` object to your MarkEdit [`settings.jso
   "extension.markeditOutlineSidebar": {
     "position": "right",          // "right" | "left" — which edge to dock to
     "onLaunch": "remember",        // "remember" last state | "open" always | "closed" always
+    "highlightMode": "scroll",     // "scroll" follows the view | "insertionPoint" follows the cursor
     "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] },
     "update": "notify"             // "automatic" | "notify" | "never" — see Staying up to date
   }

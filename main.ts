@@ -19,8 +19,9 @@ MarkEdit.onAppReady(() => {
 });
 
 // Keep the outline in sync with the document. Rebuilding the table of contents
-// requires a syntax-tree walk, so it is debounced on edits; caret moves only
-// need to refresh the active-item highlight, which is cheap.
+// requires a syntax-tree walk, so it is debounced on edits. Cursor moves only
+// matter in "follows insertion point" mode; the sidebar ignores them otherwise
+// (in the default "follows scroll" mode the highlight is driven by scroll events).
 let rebuildTimer: ReturnType<typeof setTimeout> | undefined;
 MarkEdit.addExtension(
   EditorView.updateListener.of((update) => {
@@ -30,7 +31,7 @@ MarkEdit.addExtension(
       }
       rebuildTimer = setTimeout(() => sidebar.refresh(), 250);
     } else if (update.selectionSet) {
-      sidebar.updateActive();
+      sidebar.onSelectionChange();
     }
   }),
 );

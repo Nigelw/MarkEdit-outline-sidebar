@@ -2,6 +2,7 @@ import { MarkEdit } from 'markedit-api';
 import { TOGGLE_ACTION_TITLE, REPO_URL } from './constants';
 import { addToolbarItem, removeToolbarItem } from './toolbar';
 import { setSidebarPosition } from './position';
+import { setHighlightMode } from './highlight';
 import { checkForUpdates } from './updater';
 import type { OutlineSidebar } from './sidebar';
 import type { OutlineSettings } from './settings';
@@ -36,6 +37,17 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
         title: 'Dock Right',
         action: () => void setSidebarPosition('right', settings.position),
         state: () => ({ isSelected: settings.position === 'right' }),
+      },
+      { separator: true },
+      {
+        title: 'Highlight Follows Scroll',
+        action: () => void setHighlightMode('scroll', sidebar),
+        state: () => ({ isSelected: settings.highlightMode === 'scroll' }),
+      },
+      {
+        title: 'Highlight Follows Insertion Point',
+        action: () => void setHighlightMode('insertionPoint', sidebar),
+        state: () => ({ isSelected: settings.highlightMode === 'insertionPoint' }),
       },
       { separator: true },
       {
