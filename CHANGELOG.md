@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.1.1 (2026-07-18)
+
+### Improved
+
+- Automatic update checks now run at most once a week instead of once a day.
+
 ## 1.1.0 (2026-07-18)
 
 ### New

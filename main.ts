@@ -12,7 +12,7 @@ const sidebar = new OutlineSidebar(settings);
 installMenu(settings, sidebar);
 
 // Check GitHub for a newer release once the app is ready (respects the `update`
-// setting and is throttled to once a day). A short delay keeps it well clear of
+// setting and is throttled to once a week). A short delay keeps it well clear of
 // editor startup.
 MarkEdit.onAppReady(() => {
   setTimeout(() => void checkForUpdates(settings.update), 2000);

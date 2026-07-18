@@ -18,8 +18,8 @@ import type { UpdateBehavior } from './settings';
 /** Version baked in at build time (see globals.d.ts / vite.config.mts). */
 const CURRENT_VERSION = __EXTENSION_VERSION__;
 
-/** Don't auto-check more than once per day (manual checks bypass this). */
-const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+/** Don't auto-check more than once per week (manual checks bypass this). */
+const CHECK_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface ReleaseAsset {
   name: string;
@@ -152,7 +152,7 @@ async function promptForUpdate(release: Release): Promise<void> {
  * Run an update check.
  *
  * @param behavior the configured `update` setting.
- * @param manual   true when triggered from the menu — bypasses the once-a-day
+ * @param manual   true when triggered from the menu — bypasses the weekly
  *                 throttle and the skip list, and reports "up to date".
  */
 export async function checkForUpdates(behavior: UpdateBehavior, manual = false): Promise<void> {

@@ -112,7 +112,7 @@ Add an `extension.markeditOutlineSidebar` object to your MarkEdit [`settings.jso
 
 ## Staying up to date
 
-The extension checks its [GitHub releases](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases) for a newer version shortly after MarkEdit launches (at most once a day), and any time you run *Extensions → Outline Sidebar → **Check for Updates…***. When a newer release is found it can install the new build by replacing its own script file; the new version takes effect the next time you launch MarkEdit.
+The extension checks its [GitHub releases](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases) for a newer version shortly after MarkEdit launches (at most once a week), and any time you run *Extensions → Outline Sidebar → **Check for Updates…***. When a newer release is found it can install the new build by replacing its own script file; the new version takes effect the next time you launch MarkEdit.
 
 The `update` setting controls how this behaves:
 
