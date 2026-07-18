@@ -24,7 +24,7 @@ MarkEdit features a Table of Contents as an optional **toolbar popover** (⇧⌘
 ## Install
 
 **The easy way:**
-1. Download the [latest release](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases/latest)
+1. Download the [latest release](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases/latest).
 2. Copy `markedit-outline.js` into MarkEdit's scripts folder:
 
 ```
