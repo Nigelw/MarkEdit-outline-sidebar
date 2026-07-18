@@ -9,10 +9,10 @@ export type Position = 'left' | 'right';
 /**
  * What drives the highlighted outline item:
  * - `scroll`: the section currently in view (the visible viewport in every mode)
- * - `caret`: the section the cursor is in when editing; still the visible
- *   section in preview, where there is no caret to follow
+ * - `insertionPoint`: the section the cursor is in when editing; still the
+ *   visible section in preview, where there is no cursor to follow
  */
-export type HighlightMode = 'scroll' | 'caret';
+export type HighlightMode = 'scroll' | 'insertionPoint';
 
 /**
  * What the sidebar does on launch:
@@ -40,7 +40,7 @@ export interface OutlineSettings {
   position: Position;
   /** Whether the sidebar is shown on launch: remember last state, always open, or always closed. */
   onLaunch: LaunchBehavior;
-  /** What drives the highlighted item: the visible section (`scroll`) or the cursor (`caret`). */
+  /** What drives the highlighted item: the visible section (`scroll`) or the cursor (`insertionPoint`). */
   highlightMode: HighlightMode;
   /** Keyboard shortcut for the "Toggle Outline Sidebar" menu command. */
   shortcut: Shortcut;
@@ -96,7 +96,7 @@ export function loadSettings(): OutlineSettings {
   return {
     position: raw.position === 'left' ? 'left' : DEFAULTS.position,
     onLaunch: raw.onLaunch === 'open' || raw.onLaunch === 'closed' ? raw.onLaunch : DEFAULTS.onLaunch,
-    highlightMode: raw.highlightMode === 'caret' ? 'caret' : DEFAULTS.highlightMode,
+    highlightMode: raw.highlightMode === 'insertionPoint' ? 'insertionPoint' : DEFAULTS.highlightMode,
     shortcut,
     update: UPDATE_BEHAVIORS.includes(raw.update as UpdateBehavior) ? (raw.update as UpdateBehavior) : DEFAULTS.update,
   };

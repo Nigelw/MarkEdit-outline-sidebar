@@ -96,7 +96,7 @@ Add an `extension.markeditOutlineSidebar` object to your MarkEdit [`settings.jso
   "extension.markeditOutlineSidebar": {
     "position": "right",          // "right" | "left" — which edge to dock to
     "onLaunch": "remember",        // "remember" last state | "open" always | "closed" always
-    "highlightMode": "scroll",     // "scroll" follows the view | "caret" follows the cursor
+    "highlightMode": "scroll",     // "scroll" follows the view | "insertionPoint" follows the cursor
     "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] },
     "update": "notify"             // "automatic" | "notify" | "never" — see Staying up to date
   }

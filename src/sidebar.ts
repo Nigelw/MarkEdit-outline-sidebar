@@ -181,11 +181,11 @@ export class OutlineSidebar {
 
   /**
    * The active heading for the editor pane, per the highlight mode: the section
-   * the cursor sits in (`caret`) or the section at the top of the viewport
-   * (`scroll`). Preview always follows scroll — there's no caret there.
+   * the cursor sits in (`insertionPoint`) or the section at the top of the
+   * viewport (`scroll`). Preview always follows scroll — there's no cursor there.
    */
   private activeInEditor(): number {
-    if (this.settings.highlightMode === 'caret') {
+    if (this.settings.highlightMode === 'insertionPoint') {
       return activeHeadingIndex(this.headings, MarkEdit.editorView.state.selection.main.head);
     }
     return activeEditorHeadingIndex(this.headings);
@@ -201,12 +201,12 @@ export class OutlineSidebar {
   }
 
   /**
-   * Re-evaluate on a caret move. Only relevant in `caret` mode with the editor
-   * visible; in `scroll` mode the caret doesn't drive the highlight, and in
-   * preview there's no caret (and reacting there would fight preview navigation).
+   * Re-evaluate on a cursor move. Only relevant in `insertionPoint` mode with
+   * the editor visible; in `scroll` mode the cursor doesn't drive the highlight,
+   * and in preview there's no cursor (reacting there would fight preview nav).
    */
   onSelectionChange(): void {
-    if (this.settings.highlightMode !== 'caret' || isPreviewOverlayActive()) {
+    if (this.settings.highlightMode !== 'insertionPoint' || isPreviewOverlayActive()) {
       return;
     }
     this.updateActive();
@@ -278,9 +278,9 @@ export class OutlineSidebar {
       if (isPreviewOverlayActive()) {
         return this.activeIndex;
       }
-      // In caret mode, scrolling the editor without moving the cursor must not
-      // move the highlight — the caret still decides.
-      if (this.settings.highlightMode === 'caret') {
+      // In insertion-point mode, scrolling the editor without moving the cursor
+      // must not move the highlight — the cursor still decides.
+      if (this.settings.highlightMode === 'insertionPoint') {
         return this.activeIndex;
       }
       return activeEditorHeadingIndex(this.headings);

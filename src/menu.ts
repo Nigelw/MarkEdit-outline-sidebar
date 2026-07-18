@@ -46,8 +46,8 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
       },
       {
         title: 'Highlight Follows Insertion Point',
-        action: () => void setHighlightMode('caret', sidebar),
-        state: () => ({ isSelected: settings.highlightMode === 'caret' }),
+        action: () => void setHighlightMode('insertionPoint', sidebar),
+        state: () => ({ isSelected: settings.highlightMode === 'insertionPoint' }),
       },
       { separator: true },
       {
