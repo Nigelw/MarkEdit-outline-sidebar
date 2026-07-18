@@ -1,7 +1,7 @@
 import { MarkEdit } from 'markedit-api';
 import { EditorView } from '@codemirror/view';
 import { EditorSelection } from '@codemirror/state';
-import type { Heading } from './toc';
+import { activeHeadingIndex, type Heading } from './toc';
 
 /**
  * Navigate to a heading. The editor caret is moved and the editor is scrolled to
@@ -61,6 +61,29 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
 }
 
 /**
+ * The TOC index of the heading at the editor's reference line — the section you
+ * are currently looking at in edit / side-by-side mode. The reference line sits
+ * near the top of the editor viewport, or at its vertical center in typewriter
+ * mode (where MarkEdit pins the active line, matching how `goToHeading` scrolls).
+ * Returns -1 when scrolled above the first heading.
+ */
+export function activeEditorHeadingIndex(headings: Heading[]): number {
+  if (headings.length === 0) {
+    return -1;
+  }
+  const view = MarkEdit.editorView;
+  const rect = view.scrollDOM.getBoundingClientRect();
+  const typewriterMode = window.config?.typewriterMode === true;
+  const refScreenY = rect.top + (typewriterMode ? rect.height / 2 : 12);
+  // `lineBlockAtHeight` measures from the top of the document content, whose
+  // screen position is `documentTop`; convert the screen reference line into
+  // that coordinate space.
+  const height = Math.max(0, refScreenY - view.documentTop);
+  const pos = view.lineBlockAtHeight(height).from;
+  return activeHeadingIndex(headings, pos);
+}
+
+/**
  * The TOC index of the heading the preview is currently scrolled to — the last
  * heading whose top has passed a trigger line just below the top of the preview
  * viewport (classic scroll-spy semantics). Returns:
@@ -116,7 +139,7 @@ function toTocIndex(headings: Heading[], previewHeadings: HTMLElement[], preview
   return found;
 }
 
-function isPreviewOverlayActive(): boolean {
+export function isPreviewOverlayActive(): boolean {
   const overlay = document.querySelector<HTMLElement>('.markdown-body.overlay');
   return overlay !== null && isDisplayed(overlay);
 }

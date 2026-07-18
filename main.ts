@@ -19,8 +19,9 @@ MarkEdit.onAppReady(() => {
 });
 
 // Keep the outline in sync with the document. Rebuilding the table of contents
-// requires a syntax-tree walk, so it is debounced on edits; caret moves only
-// need to refresh the active-item highlight, which is cheap.
+// requires a syntax-tree walk, so it is debounced on edits. The active-item
+// highlight follows the visible viewport, not the caret, so it's driven by
+// scroll events inside the sidebar rather than from here.
 let rebuildTimer: ReturnType<typeof setTimeout> | undefined;
 MarkEdit.addExtension(
   EditorView.updateListener.of((update) => {
@@ -29,8 +30,6 @@ MarkEdit.addExtension(
         clearTimeout(rebuildTimer);
       }
       rebuildTimer = setTimeout(() => sidebar.refresh(), 250);
-    } else if (update.selectionSet) {
-      sidebar.updateActive();
     }
   }),
 );

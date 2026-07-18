@@ -1,6 +1,11 @@
 import { MarkEdit } from 'markedit-api';
-import { extractHeadings, activeHeadingIndex, type Heading } from './toc';
-import { goToHeading, activePreviewHeadingIndex } from './navigation';
+import { extractHeadings, type Heading } from './toc';
+import {
+  goToHeading,
+  activeEditorHeadingIndex,
+  activePreviewHeadingIndex,
+  isPreviewOverlayActive,
+} from './navigation';
 import { CSS, STYLE_ELEMENT_ID } from './styles';
 import { VISIBLE_STORAGE_KEY, WIDTH_STORAGE_KEY } from './constants';
 import type { OutlineSettings } from './settings';
@@ -131,22 +136,30 @@ export class OutlineSidebar {
     this.headings = extractHeadings(MarkEdit.editorView.state);
     this.renderList();
     this.updateActive();
-    // In preview mode the caret is stale, so prefer the preview's scroll position
-    // for the initial highlight when a preview is visible.
-    const previewIndex = activePreviewHeadingIndex(this.headings);
-    if (previewIndex !== undefined) {
-      this.setActive(previewIndex);
-    }
   }
 
-  /** Update which item is highlighted based on the current caret position. */
+  /**
+   * Highlight the section currently in view. One rule for every mode: the item
+   * that matches the reference line of the pane you're looking at — the preview
+   * when it's showing full-screen, otherwise the editor viewport. The caret does
+   * not drive the highlight, so it can't drift out of step with what's on screen.
+   */
   updateActive(): void {
     if (!this.mounted || !this.opened || this.items.length === 0) {
       return;
     }
+    this.setActive(this.activeInView());
+  }
 
-    const head = MarkEdit.editorView.state.selection.main.head;
-    this.setActive(activeHeadingIndex(this.headings, head));
+  /** The active heading index for whichever pane is the visible surface. */
+  private activeInView(): number {
+    if (isPreviewOverlayActive()) {
+      const preview = activePreviewHeadingIndex(this.headings);
+      // Fall back to the editor only when there's genuinely no preview to read
+      // (undefined); -1 legitimately means "scrolled above the first heading".
+      return preview ?? activeEditorHeadingIndex(this.headings);
+    }
+    return activeEditorHeadingIndex(this.headings);
   }
 
   /**
@@ -182,7 +195,7 @@ export class OutlineSidebar {
       return;
     }
     // Ignore the sidebar list's own scrolling.
-    const target = event.target as Node | null;
+    const target = event.target;
     if (target instanceof HTMLElement && target.closest('.meo-sidebar')) {
       return;
     }
@@ -196,11 +209,28 @@ export class OutlineSidebar {
       if (!this.opened) {
         return;
       }
-      const next = activePreviewHeadingIndex(this.headings);
-      if (next !== undefined) {
-        this.setActive(next);
-      }
+      this.setActive(this.activeForScroll(target));
     });
+  }
+
+  /**
+   * Resolve the active heading for a scroll coming from `target`, routing to the
+   * pane that actually scrolled so the two panes don't fight in side-by-side.
+   * Returns the current index unchanged (a no-op) when the scroll shouldn't move
+   * the highlight — e.g. the hidden editor scrolling behind a full-screen preview.
+   */
+  private activeForScroll(target: EventTarget | null): number {
+    const scroller = MarkEdit.editorView.scrollDOM;
+    const fromEditor = target instanceof Node && (target === scroller || scroller.contains(target));
+    if (fromEditor) {
+      // In full-screen preview the editor is hidden behind the overlay yet still
+      // emits scroll (e.g. when navigating); the preview is what you see.
+      if (isPreviewOverlayActive()) {
+        return this.activeIndex;
+      }
+      return activeEditorHeadingIndex(this.headings);
+    }
+    return activePreviewHeadingIndex(this.headings) ?? this.activeIndex;
   }
 
   // MARK: - DOM construction
@@ -338,6 +368,8 @@ export class OutlineSidebar {
     if (Number.isNaN(index)) {
       return;
     }
+    // Direct manipulation wins immediately; the scroll-spy then keeps it there.
+    this.setActive(index);
     goToHeading(this.headings, index, true);
   }
 
