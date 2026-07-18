@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.0.1 (2026-07-17)
+
+### Improved
+
+- Updates now install from GitHub release downloads.
+
 ## 1.0.0 (2026-07-17)
 
 ### New
