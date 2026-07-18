@@ -1,15 +1,20 @@
 import { MarkEdit } from 'markedit-api';
 import { SETTINGS_NAMESPACE } from './constants';
+import { loadSettings } from './settings';
 import { readSettings, writeSettings } from './settingsFile';
-import type { Position } from './settings';
+import type { OutlineSettings, Position } from './settings';
+import type { OutlineSidebar } from './sidebar';
 
 /**
  * Change which edge the sidebar is docked to by editing `settings.json`, then
- * prompt to restart. Position is read once at launch (in `loadSettings`), so a
- * relaunch is needed to apply it — mirroring the "Add/Remove Toolbar" commands.
+ * refresh the runtime settings and apply the validated value immediately.
  */
-export async function setSidebarPosition(position: Position, active: Position): Promise<void> {
-  const side = position === 'left' ? 'left' : 'right';
+export async function setSidebarPosition(
+  position: Position,
+  settings: OutlineSettings,
+  sidebar: OutlineSidebar,
+): Promise<void> {
+  const active = settings.position;
 
   const parsed = await readSettings();
   if (parsed === undefined) {
@@ -41,17 +46,14 @@ export async function setSidebarPosition(position: Position, active: Position): 
     return;
   }
 
-  await MarkEdit.showAlert(
-    position === active
-      ? {
-          title: `Docked on the ${side}`,
-          message: `The Outline Sidebar is already on the ${side}.`,
-          buttons: ['OK'],
-        }
-      : {
-          title: 'Restart to apply',
-          message: `Restart MarkEdit to move the Outline Sidebar to the ${side}.`,
-          buttons: ['OK'],
-        },
-  );
+  await reloadMarkEditSettings(parsed);
+  const next = loadSettings();
+  Object.assign(settings, next);
+  sidebar.applySettings(settings, active);
+}
+
+async function reloadMarkEditSettings(parsed: Record<string, unknown>): Promise<void> {
+  const api = MarkEdit as typeof MarkEdit & { loadSettings?: () => void | Promise<void> };
+  await api.loadSettings?.();
+  (MarkEdit.userSettings as Record<string, unknown>)[SETTINGS_NAMESPACE] = parsed[SETTINGS_NAMESPACE];
 }

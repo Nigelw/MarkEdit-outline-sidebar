@@ -30,12 +30,12 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
       { separator: true },
       {
         title: 'Dock Left',
-        action: () => void setSidebarPosition('left', settings.position),
+        action: () => void setSidebarPosition('left', settings, sidebar),
         state: () => ({ isSelected: settings.position === 'left' }),
       },
       {
         title: 'Dock Right',
-        action: () => void setSidebarPosition('right', settings.position),
+        action: () => void setSidebarPosition('right', settings, sidebar),
         state: () => ({ isSelected: settings.position === 'right' }),
       },
       { separator: true },

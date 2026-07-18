@@ -9,13 +9,13 @@ import {
 } from './navigation';
 import { CSS, STYLE_ELEMENT_ID } from './styles';
 import { VISIBLE_STORAGE_KEY, WIDTH_STORAGE_KEY } from './constants';
-import type { HighlightMode, OutlineSettings } from './settings';
+import type { HighlightMode, OutlineSettings, Position } from './settings';
 
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 160;
 
 export class OutlineSidebar {
-  private readonly settings: OutlineSettings;
+  private settings: OutlineSettings;
 
   private mounted = false;
   private opened = false;
@@ -68,6 +68,23 @@ export class OutlineSidebar {
 
   isOpen(): boolean {
     return this.opened;
+  }
+
+  /** Apply freshly loaded settings to the live sidebar without remounting it. */
+  applySettings(settings: OutlineSettings, previousPosition: Position = this.settings.position): void {
+    this.settings = settings;
+
+    if (this.mounted && previousPosition !== settings.position) {
+      if (this.opened) {
+        this.pushEditor(false);
+      }
+      this.root.setAttribute('data-position', settings.position);
+      if (this.opened) {
+        this.pushEditor(true);
+      }
+    }
+
+    this.updateActive();
   }
 
   /** Whether the sidebar should be open on launch, per the `onLaunch` setting. */
