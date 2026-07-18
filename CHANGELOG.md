@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.1.0 (2026-07-18)
+
+### New
+
+- The highlighted outline item now tracks your scroll position by default, in both edit and preview modes.
+- Adding a setting in the extension menu to choose whether the outline follows scroll position (new default) or insertion point (old behavior).
+
 ## 1.0.2 (2026-07-18)
 
 ### New
