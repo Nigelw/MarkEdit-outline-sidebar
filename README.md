@@ -11,11 +11,11 @@ MarkEdit features a Table of Contents as an optional **toolbar popover** (⇧⌘
 ## Features
 
 - **Sidebar** listing every heading, indented by level, with the current section highlighted as you move the caret.
-- **Click to navigate**: clicking a heading scrolls the editor to it and moves the caret there.
-- **Preview mode support**: when the [MarkEdit-preview](https://github.com/MarkEdit-app/MarkEdit-preview) extension is showing a preview, clicking a heading scrolls the rendered preview to the matching heading and briefly highlights it. This works whether preview's syncScroll setting is enabled or disabled.
 - **Dock left or right**: position the sidebar on either side of the window.
 - **Resizable**: drag the divider to resize it.
+- **Click to navigate**: clicking a heading scrolls the editor to it and moves the caret there.
 - **Live updates**: the outline rebuilds as you type (debounced) and re-highlights as you move around.
+- **Preview mode support**: when the [MarkEdit-preview](https://github.com/MarkEdit-app/MarkEdit-preview) extension is showing a preview, clicking a heading scrolls the rendered preview to the matching heading and briefly highlights it. This works whether preview's syncScroll setting is enabled or disabled.
 - **Restores state**: the extension remembers whether the sidebar was open or closed, which side it's docked to, and how wide it is across app launches.
 - **Multiple ways to toggle**: a keyboard shortcut, an Extensions menu command, and an optional **native toolbar button** (see *Toggling* below).
 - **Theme-aware**: the panel reads colors from the live editor theme, so it matches MarkEdit's light, dark, and custom themes automatically.
