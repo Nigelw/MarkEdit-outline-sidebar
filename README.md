@@ -61,7 +61,9 @@ The extension exposes the toggle three ways:
 
 *Remove Toolbar Button…* reverses the settings change (then drag it back out via Customize Toolbar).
 
-**The manual way:** add this to `settings.json` yourself instead of using the menu command:
+**The manual way:**
+
+Add this to `settings.json` yourself instead of using the menu command:
 
 ```jsonc
 "editor.customToolbarItems": [
