@@ -10,7 +10,7 @@ MarkEdit features a Table of Contents as an optional **toolbar popover** (⇧⌘
 
 ## Features
 
-- **Sidebar** listing every heading, indented by level, with the current section highlighted as you move the caret.
+- **Sidebar** listing every heading, indented by level, with the current section highlighted.
 - **Dock left or right**: position the sidebar on either side of the window.
 - **Resizable**: drag the divider to resize it.
 - **Click to navigate**: clicking a heading scrolls the editor to it and moves the caret there.
@@ -82,7 +82,7 @@ Resize the sidebar by dragging the divider between it and the editor — the wid
 
 ## Highlighting
 
-The current section is highlighted in the outline as you move through the document. Two modes, switchable live from *Extensions → Outline Sidebar → **Highlight Follows Scroll** / **Highlight Follows Insertion Point*** (or with the `highlightMode` setting below):
+The current section is highlighted in the outline as you move through the document. There are two highlighting modes, switchable live from *Extensions → Outline Sidebar → **Highlight Follows Scroll** / **Highlight Follows Insertion Point*** (or with the `highlightMode` setting below):
 
 - **Follows Scroll** *(default)* — the highlight tracks the section you're viewing, following the editor or preview as you scroll.
 - **Follows Insertion Point** — the highlight tracks the section your cursor is in while editing. In preview there's no cursor, so it still follows the scroll position.
