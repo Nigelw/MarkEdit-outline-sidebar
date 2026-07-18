@@ -80,6 +80,13 @@ The sidebar can dock to either edge of the window. Switch sides from *Extensions
 
 Resize the sidebar by dragging the divider between it and the editor — the width is remembered automatically.
 
+## Highlighting
+
+The current section is highlighted in the outline as you move through the document. Two modes, switchable live from *Extensions → Outline Sidebar → **Highlight Follows Scroll** / **Highlight Follows Caret*** (or with the `highlightMode` setting below):
+
+- **Follows Scroll** *(default)* — the highlight tracks the section you're viewing, following the editor or preview as you scroll.
+- **Follows Caret** — the highlight tracks the section your cursor is in while editing. In preview there's no cursor, so it still follows the scroll position.
+
 ## Configuration
 
 Add an `extension.markeditOutlineSidebar` object to your MarkEdit [`settings.json`](https://github.com/MarkEdit-app/MarkEdit/wiki/Customization#advanced-settings) (in the same `Documents` folder). The `extension.` prefix is required by MarkEdit's [settings schema](https://github.com/MarkEdit-app/schemas). All fields are optional:
@@ -89,6 +96,7 @@ Add an `extension.markeditOutlineSidebar` object to your MarkEdit [`settings.jso
   "extension.markeditOutlineSidebar": {
     "position": "right",          // "right" | "left" — which edge to dock to
     "onLaunch": "remember",        // "remember" last state | "open" always | "closed" always
+    "highlightMode": "scroll",     // "scroll" follows the view | "caret" follows the cursor
     "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] },
     "update": "notify"             // "automatic" | "notify" | "never" — see Staying up to date
   }

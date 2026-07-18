@@ -34,6 +34,7 @@ src/sidebar.ts       The sidebar UI: build, render, theme, open/close
 src/menu.ts          Extensions-menu commands + keyboard shortcut
 src/toolbar.ts       Add / remove the native toolbar item via settings.json
 src/position.ts      Change the docked side via settings.json
+src/highlight.ts     Switch the highlight mode (scroll / caret) live + persist it
 src/settingsFile.ts  Read / write settings.json (shared)
 src/updater.ts       Check GitHub releases and self-install new builds
 src/constants.ts     Shared constants (command title, settings namespace, storage keys, repo/update URLs)

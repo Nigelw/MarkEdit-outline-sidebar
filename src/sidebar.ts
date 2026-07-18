@@ -1,5 +1,5 @@
 import { MarkEdit } from 'markedit-api';
-import { extractHeadings, type Heading } from './toc';
+import { extractHeadings, activeHeadingIndex, type Heading } from './toc';
 import {
   goToHeading,
   activeEditorHeadingIndex,
@@ -9,7 +9,7 @@ import {
 } from './navigation';
 import { CSS, STYLE_ELEMENT_ID } from './styles';
 import { VISIBLE_STORAGE_KEY, WIDTH_STORAGE_KEY } from './constants';
-import type { OutlineSettings } from './settings';
+import type { HighlightMode, OutlineSettings } from './settings';
 
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 160;
@@ -174,9 +174,42 @@ export class OutlineSidebar {
       const preview = activePreviewHeadingIndex(this.headings);
       // Fall back to the editor only when there's genuinely no preview to read
       // (undefined); -1 legitimately means "scrolled above the first heading".
-      return preview ?? activeEditorHeadingIndex(this.headings);
+      return preview ?? this.activeInEditor();
+    }
+    return this.activeInEditor();
+  }
+
+  /**
+   * The active heading for the editor pane, per the highlight mode: the section
+   * the cursor sits in (`caret`) or the section at the top of the viewport
+   * (`scroll`). Preview always follows scroll — there's no caret there.
+   */
+  private activeInEditor(): number {
+    if (this.settings.highlightMode === 'caret') {
+      return activeHeadingIndex(this.headings, MarkEdit.editorView.state.selection.main.head);
     }
     return activeEditorHeadingIndex(this.headings);
+  }
+
+  /** Switch the highlight mode live and re-seed the highlight under the new rule. */
+  setHighlightMode(mode: HighlightMode): void {
+    if (this.settings.highlightMode === mode) {
+      return;
+    }
+    this.settings.highlightMode = mode;
+    this.updateActive();
+  }
+
+  /**
+   * Re-evaluate on a caret move. Only relevant in `caret` mode with the editor
+   * visible; in `scroll` mode the caret doesn't drive the highlight, and in
+   * preview there's no caret (and reacting there would fight preview navigation).
+   */
+  onSelectionChange(): void {
+    if (this.settings.highlightMode !== 'caret' || isPreviewOverlayActive()) {
+      return;
+    }
+    this.updateActive();
   }
 
   /**
@@ -243,6 +276,11 @@ export class OutlineSidebar {
       // In full-screen preview the editor is hidden behind the overlay yet still
       // emits scroll (e.g. when navigating); the preview is what you see.
       if (isPreviewOverlayActive()) {
+        return this.activeIndex;
+      }
+      // In caret mode, scrolling the editor without moving the cursor must not
+      // move the highlight — the caret still decides.
+      if (this.settings.highlightMode === 'caret') {
         return this.activeIndex;
       }
       return activeEditorHeadingIndex(this.headings);
