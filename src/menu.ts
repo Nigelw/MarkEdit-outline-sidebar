@@ -45,7 +45,7 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
         state: () => ({ isSelected: settings.highlightMode === 'scroll' }),
       },
       {
-        title: 'Highlight Follows Caret',
+        title: 'Highlight Follows Insertion Point',
         action: () => void setHighlightMode('caret', sidebar),
         state: () => ({ isSelected: settings.highlightMode === 'caret' }),
       },
