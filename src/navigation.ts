@@ -72,14 +72,7 @@ export function activeEditorHeadingIndex(headings: Heading[]): number {
     return -1;
   }
   const view = MarkEdit.editorView;
-  const scroller = view.scrollDOM;
-  const rect = scroller.getBoundingClientRect();
-
-  // At the very bottom a short trailing section can never reach the trigger line,
-  // so pin the last heading there (mirrors the preview's bottom handling).
-  if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2) {
-    return headings.length - 1;
-  }
+  const rect = view.scrollDOM.getBoundingClientRect();
 
   const typewriterMode = window.config?.typewriterMode === true;
   const refScreenY = rect.top + (typewriterMode ? rect.height / 2 : triggerOffset(rect.height));
@@ -98,7 +91,7 @@ export function activeEditorHeadingIndex(headings: Heading[]): number {
  * only when it's pinned to the very edge.
  */
 function triggerOffset(viewportHeight: number): number {
-  return Math.min(Math.max(viewportHeight * 0.2, 48), 140);
+  return Math.min(Math.max(viewportHeight * 0.1, 48), 140);
 }
 
 /**
@@ -124,15 +117,6 @@ export function activePreviewHeadingIndex(headings: Heading[]): number | undefin
   // its top crosses this line, so the section you're reading lights up while its
   // heading is still near the top rather than only at the very edge.
   const triggerLine = containerTop + triggerOffset(rect?.height ?? window.innerHeight);
-
-  // When the preview is scrolled to the bottom a short trailing section can never
-  // reach the trigger line, so pin the last heading as active there.
-  if (container !== undefined) {
-    const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 2;
-    if (atBottom) {
-      return toTocIndex(headings, previewHeadings, previewHeadings.length - 1);
-    }
-  }
 
   let current = -1;
   for (let i = 0; i < previewHeadings.length; i++) {
