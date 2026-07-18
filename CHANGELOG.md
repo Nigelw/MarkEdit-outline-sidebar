@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 1.0.2 (2026-07-18)
+
+### New
+
+- A GitHub project link in the *Extensions → Outline Sidebar* menu.
+
+### Fixed
+
+- Clicking a heading now centers it correctly when MarkEdit's typewriter mode ("keep caret in the middle") is enabled, instead of scrolling to the wrong spot.
+- The sidebar now picks up the right colors when switching between light and dark mode with theme extensions that repaint after a short delay (e.g. Basic theme).
+
 ## 1.0.1 (2026-07-17)
 
 ### Improved

@@ -25,9 +25,19 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
   const view = MarkEdit.editorView;
   const pos = Math.max(0, Math.min(heading.from, view.state.doc.length));
 
+  // With MarkEdit's typewriter mode ("keep caret in the middle") on, the active
+  // line is pinned to the vertical center — even at the document edges — so
+  // scrolling the heading to the top lands in the wrong place (and MarkEdit
+  // would fight us to re-center anyway). Center it instead, matching MarkEdit's
+  // own outline navigation (`scrollToSelection(typewriterMode ? 'center' : 'start')`).
+  const typewriterMode = window.config?.typewriterMode === true;
+  const scrollEffect = typewriterMode
+    ? EditorView.scrollIntoView(pos, { y: 'center' })
+    : EditorView.scrollIntoView(pos, { y: 'start', yMargin: 8 });
+
   view.dispatch({
     selection: EditorSelection.cursor(pos),
-    effects: EditorView.scrollIntoView(pos, { y: 'start', yMargin: 8 }),
+    effects: scrollEffect,
   });
 
   // Don't steal focus into the editor while it's hidden behind the preview overlay.

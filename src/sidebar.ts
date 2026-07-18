@@ -46,7 +46,11 @@ export class OutlineSidebar {
     }
 
     this.applyTheme();
-    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => this.applyTheme());
+    // A theme extension may repaint the editor asynchronously after the OS
+    // appearance flips (e.g. markedit-theme-basic defers its restyle ~200ms),
+    // so a single synchronous read here would capture the pre-switch colors.
+    // Poll until the editor's background matches the new appearance instead.
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => this.repollTheme());
   }
 
   isOpen(): boolean {
@@ -330,18 +334,51 @@ export class OutlineSidebar {
     MarkEdit.editorView.requestMeasure();
   }
 
-  /** Pull colors from the live editor theme so the panel matches it. */
-  private applyTheme(): void {
-    if (!this.mounted) {
-      return;
-    }
-
+  /**
+   * Read the editor's background and foreground colors from its live computed
+   * style, falling back to sensible defaults. Shared by `applyTheme` (to paint
+   * the panel) and `repollTheme` (to detect when a deferred theme restyle has
+   * landed).
+   */
+  private readEditorColors(): { bg: string; fg: string } {
     const view = MarkEdit.editorView;
     const editorStyle = getComputedStyle(view.dom);
     const contentStyle = getComputedStyle(view.contentDOM ?? view.dom);
 
     const bg = firstOpaqueColor([editorStyle.backgroundColor, getComputedStyle(document.body).backgroundColor]) ?? '#ffffff';
     const fg = firstOpaqueColor([contentStyle.color, editorStyle.color]) ?? '#1a1a1a';
+    return { bg, fg };
+  }
+
+  /**
+   * Re-apply the theme once the editor's background matches the appearance the
+   * OS media query now reports, or give up after a short deadline. This bridges
+   * theme extensions that repaint the editor asynchronously after an appearance
+   * switch, where a single synchronous read would capture stale colors.
+   */
+  private repollTheme(): void {
+    const wantDark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const deadline = performance.now() + 500;
+
+    const tick = () => {
+      const settled = isDarkColor(this.readEditorColors().bg) === wantDark;
+      if (settled || performance.now() >= deadline) {
+        this.applyTheme();
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
+  }
+
+  /** Pull colors from the live editor theme so the panel matches it. */
+  private applyTheme(): void {
+    if (!this.mounted) {
+      return;
+    }
+
+    const { bg, fg } = this.readEditorColors();
     const dark = isDarkColor(bg);
 
     const set = (name: string, value: string) => this.root.style.setProperty(name, value);
