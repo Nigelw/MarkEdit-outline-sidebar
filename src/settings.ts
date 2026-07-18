@@ -14,6 +14,14 @@ export type Position = 'left' | 'right';
  */
 export type LaunchBehavior = 'remember' | 'open' | 'closed';
 
+/**
+ * How the extension handles a newer release on GitHub:
+ * - `automatic`: download and install it silently, then prompt to restart
+ * - `notify`: ask before downloading (default)
+ * - `never`: don't check for updates at all
+ */
+export type UpdateBehavior = 'automatic' | 'notify' | 'never';
+
 export interface Shortcut {
   key: string;
   modifiers: KeyModifier[];
@@ -26,13 +34,18 @@ export interface OutlineSettings {
   onLaunch: LaunchBehavior;
   /** Keyboard shortcut for the "Toggle Outline Sidebar" menu command. */
   shortcut: Shortcut;
+  /** How automatic update checking behaves. */
+  update: UpdateBehavior;
 }
+
+const UPDATE_BEHAVIORS: UpdateBehavior[] = ['automatic', 'notify', 'never'];
 
 const DEFAULTS: OutlineSettings = {
   position: 'right',
   onLaunch: 'remember',
   // ⇧⌘L by default — the native Table of Contents already uses ⇧⌘O.
   shortcut: { key: 'l', modifiers: ['Command', 'Shift'] },
+  update: 'notify',
 };
 
 const VALID_MODIFIERS: KeyModifier[] = ['Shift', 'Control', 'Command', 'Option'];
@@ -73,5 +86,6 @@ export function loadSettings(): OutlineSettings {
     position: raw.position === 'left' ? 'left' : DEFAULTS.position,
     onLaunch: raw.onLaunch === 'open' || raw.onLaunch === 'closed' ? raw.onLaunch : DEFAULTS.onLaunch,
     shortcut,
+    update: UPDATE_BEHAVIORS.includes(raw.update as UpdateBehavior) ? (raw.update as UpdateBehavior) : DEFAULTS.update,
   };
 }

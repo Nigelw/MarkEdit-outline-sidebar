@@ -2,6 +2,7 @@ import { MarkEdit } from 'markedit-api';
 import { TOGGLE_ACTION_TITLE } from './constants';
 import { addToolbarItem, removeToolbarItem } from './toolbar';
 import { setSidebarPosition } from './position';
+import { checkForUpdates } from './updater';
 import type { OutlineSidebar } from './sidebar';
 import type { OutlineSettings } from './settings';
 
@@ -44,6 +45,11 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
       {
         title: 'Remove Toolbar Button',
         action: () => void removeToolbarItem(),
+      },
+      { separator: true },
+      {
+        title: 'Check for Updates…',
+        action: () => void checkForUpdates(settings.update, true),
       },
     ],
   });

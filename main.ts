@@ -4,11 +4,19 @@ import { EditorView } from '@codemirror/view';
 import { loadSettings } from './src/settings';
 import { OutlineSidebar } from './src/sidebar';
 import { installMenu } from './src/menu';
+import { checkForUpdates } from './src/updater';
 
 const settings = loadSettings();
 const sidebar = new OutlineSidebar(settings);
 
 installMenu(settings, sidebar);
+
+// Check GitHub for a newer release once the app is ready (respects the `update`
+// setting and is throttled to once a day). A short delay keeps it well clear of
+// editor startup.
+MarkEdit.onAppReady(() => {
+  setTimeout(() => void checkForUpdates(settings.update), 2000);
+});
 
 // Keep the outline in sync with the document. Rebuilding the table of contents
 // requires a syntax-tree walk, so it is debounced on edits; caret moves only

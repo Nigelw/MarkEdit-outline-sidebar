@@ -22,3 +22,29 @@ export const VISIBLE_STORAGE_KEY = 'markedit-outline.visible';
 
 /** localStorage key remembering the width the user dragged the sidebar to. */
 export const WIDTH_STORAGE_KEY = 'markedit-outline.width';
+
+/**
+ * GitHub repo hosting this extension's releases, in `owner/repo` form. Used to
+ * build the update-check URLs below. Keep this in sync with the actual repo the
+ * releases live in.
+ */
+export const GITHUB_REPO = 'Nigelw/MarkEdit-outline-sidebar';
+
+/** GitHub API endpoint returning the metadata of the latest published release. */
+export const LATEST_RELEASE_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+
+/**
+ * Base for downloading a built script straight from a tagged commit. The updater
+ * appends `refs/tags/<tag>/dist/<file>` to this, so the built
+ * `dist/markedit-outline.js` must be committed at each tagged release.
+ */
+export const RAW_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/`;
+
+/** Built script filename, matching `package.json`'s `name` + `.js`. */
+export const DIST_FILENAME = 'markedit-outline.js';
+
+/** localStorage key holding the epoch-ms timestamp of the last update check. */
+export const LAST_CHECK_STORAGE_KEY = 'markedit-outline.updater.last-check';
+
+/** localStorage key holding a JSON array of release tags the user chose to skip. */
+export const SKIPPED_VERSIONS_STORAGE_KEY = 'markedit-outline.updater.skipped';
