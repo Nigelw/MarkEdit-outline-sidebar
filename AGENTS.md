@@ -33,7 +33,7 @@ src/navigation.ts    Scroll the editor (and preview) to a heading
 src/sidebar.ts       The sidebar UI: build, render, theme, open/close
 src/menu.ts          Extensions-menu commands + keyboard shortcut
 src/toolbar.ts       Add / remove the native toolbar item via settings.json
-src/position.ts      Change the docked side via settings.json
+src/position.ts      Change the docked side live + persist it via settings.json
 src/highlight.ts     Switch the highlight mode (scroll / caret) live + persist it
 src/settingsFile.ts  Read / write settings.json (shared)
 src/updater.ts       Check GitHub releases and self-install new builds
