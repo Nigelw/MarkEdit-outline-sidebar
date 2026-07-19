@@ -13,8 +13,8 @@ import { activeHeadingIndex, type Heading } from './toc';
  *   deliberately do NOT scroll the preview ourselves — and since the editor
  *   scroll is idempotent, clicking the same item again doesn't move the editor,
  *   so no scroll event fires, the sync doesn't re-run, and the viewport stays put.
- * - Sync OFF: nothing else moves the preview, so we scroll it ourselves,
- *   idempotently (no sync to fight, so repeat clicks stay stable).
+ * - Sync OFF: nothing else moves the preview, so we scroll it ourselves unless
+ *   another scroll-sync extension has advertised that it owns synchronization.
  */
 export function goToHeading(headings: Heading[], index: number, syncPreview: boolean): void {
   const heading = headings[index];
@@ -48,10 +48,9 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
   if (syncPreview) {
     const target = findPreviewHeading(headings, index);
     if (target !== undefined) {
-      // When MarkEdit-preview's scroll-sync is off it won't move the preview to
-      // follow the editor, so scroll it ourselves. When it's on, leave the
-      // preview to the sync (scrolling it here too would fight it).
-      if (!isPreviewScrollSyncEnabled()) {
+      // When a sync extension owns editor->preview movement, leave the preview
+      // to it. Scrolling the preview here too can create correction jumps.
+      if (!isPreviewScrollSyncEnabled() && !isBidirectionalScrollSyncActive()) {
         document.querySelectorAll<HTMLElement>('.markdown-body span.meo-flash').forEach(unwrapSpan);
         alignPreviewHeading(target);
       }
@@ -179,6 +178,10 @@ function isPreviewScrollSyncEnabled(): boolean {
     // userSettings unavailable; assume the default (enabled).
   }
   return true;
+}
+
+function isBidirectionalScrollSyncActive(): boolean {
+  return window.__markeditBidirectionalScrollSync__?.isActive === true;
 }
 
 /**

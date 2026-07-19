@@ -16,4 +16,7 @@ interface Window {
   config?: {
     typewriterMode?: boolean;
   };
+  __markeditBidirectionalScrollSync__?: {
+    isActive?: boolean;
+  };
 }
