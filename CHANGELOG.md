@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.2 (2026-07-19)
+
 ### Improved
 
 - Switching the sidebar layout between the left and right sides now occurs immediately without requiring a relaunch of MarkEdit.
