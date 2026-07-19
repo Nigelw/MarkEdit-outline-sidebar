@@ -24,9 +24,11 @@ export class OutlineSidebar {
   private root!: HTMLElement;
   private list!: HTMLElement;
   private empty!: HTMLElement;
+  private notice!: HTMLElement;
   private resizer!: HTMLElement;
 
   private headings: Heading[] = [];
+  private truncated = false;
   private items: HTMLElement[] = [];
   private activeIndex = -1;
 
@@ -167,7 +169,9 @@ export class OutlineSidebar {
       return;
     }
 
-    this.headings = extractHeadings(MarkEdit.editorView.state);
+    const extracted = extractHeadings(MarkEdit.editorView.state);
+    this.headings = extracted.headings;
+    this.truncated = extracted.truncated;
     this.renderList();
     this.updateActive();
   }
@@ -366,17 +370,22 @@ export class OutlineSidebar {
     empty.textContent = 'No headings in this document.';
     empty.style.display = 'none';
 
+    const notice = document.createElement('div');
+    notice.className = 'meo-notice';
+    notice.style.display = 'none';
+
     const resizer = document.createElement('div');
     resizer.className = 'meo-resizer';
     resizer.title = 'Drag to resize';
     resizer.addEventListener('mousedown', (event) => this.startResize(event));
 
-    root.append(header, list, empty, resizer);
+    root.append(header, list, empty, notice, resizer);
     document.body.appendChild(root);
 
     this.root = root;
     this.list = list;
     this.empty = empty;
+    this.notice = notice;
     this.resizer = resizer;
   }
 
@@ -436,9 +445,15 @@ export class OutlineSidebar {
 
     if (this.headings.length === 0) {
       this.empty.style.display = '';
+      this.notice.style.display = this.truncated ? '' : 'none';
+      this.notice.textContent = this.truncated ? 'Outline unavailable until CodeMirror finishes parsing this large document.' : '';
       return;
     }
     this.empty.style.display = 'none';
+    this.notice.style.display = this.truncated ? '' : 'none';
+    this.notice.textContent = this.truncated
+      ? `Showing first ${this.headings.length.toLocaleString()} headings. Outline truncated for performance.`
+      : '';
 
     const fragment = document.createDocumentFragment();
     this.headings.forEach((heading, index) => {

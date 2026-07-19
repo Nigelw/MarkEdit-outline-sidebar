@@ -110,6 +110,16 @@ html.meo-push-left .cm-md-activeLine {
   opacity: 0.5;
   font-style: italic;
 }
+.meo-notice {
+  flex: 0 0 auto;
+  margin: 0 10px 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--meo-hover, #f0f0f0);
+  color: inherit;
+  font-size: 12px;
+  opacity: 0.72;
+}
 
 /* Drag handle straddling the sidebar's inner edge, for resizing. */
 .meo-resizer {

@@ -14,7 +14,7 @@ import { activeHeadingIndex, type Heading } from './toc';
  *   scroll is idempotent, clicking the same item again doesn't move the editor,
  *   so no scroll event fires, the sync doesn't re-run, and the viewport stays put.
  * - Sync OFF: nothing else moves the preview, so we scroll it ourselves unless
- *   the bidirectional sync extension is active. In that case, we signal that the
+ *   the bidirectional preview sync extension is active. In that case, we signal that the
  *   editor navigation is intentional and leave preview movement to sync.
  */
 export function goToHeading(headings: Heading[], index: number, syncPreview: boolean): void {
@@ -36,8 +36,8 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
     ? EditorView.scrollIntoView(pos, { y: 'center' })
     : EditorView.scrollIntoView(pos, { y: 'start', yMargin: 8 });
 
-  if (syncPreview && !isPreviewScrollSyncEnabled() && isBidirectionalScrollSyncActive()) {
-    window.__markeditBidirectionalScrollSync__?.beginEditorScroll?.({ animated: true });
+  if (syncPreview && !isPreviewScrollSyncEnabled() && isBidirectionalPreviewSyncActive()) {
+    window.__markeditBidirectionalPreviewSync__?.beginEditorScroll?.({ animated: true });
   }
 
   view.dispatch({
@@ -53,7 +53,7 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
   if (syncPreview) {
     const target = findPreviewHeading(headings, index);
     if (target !== undefined) {
-      if (!isPreviewScrollSyncEnabled() && !isBidirectionalScrollSyncActive()) {
+      if (!isPreviewScrollSyncEnabled() && !isBidirectionalPreviewSyncActive()) {
         document.querySelectorAll<HTMLElement>('.markdown-body span.meo-flash').forEach(unwrapSpan);
         alignPreviewHeading(target);
       }
@@ -183,8 +183,8 @@ function isPreviewScrollSyncEnabled(): boolean {
   return true;
 }
 
-function isBidirectionalScrollSyncActive(): boolean {
-  return window.__markeditBidirectionalScrollSync__?.isActive === true;
+function isBidirectionalPreviewSyncActive(): boolean {
+  return window.__markeditBidirectionalPreviewSync__?.isActive === true;
 }
 
 /**

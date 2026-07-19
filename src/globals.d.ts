@@ -16,7 +16,7 @@ interface Window {
   config?: {
     typewriterMode?: boolean;
   };
-  __markeditBidirectionalScrollSync__?: {
+  __markeditBidirectionalPreviewSync__?: {
     isActive?: boolean;
     beginScroll?: (source: 'editor' | 'preview', options?: { animated?: boolean }) => void;
     beginPreviewScroll?: (options?: { animated?: boolean }) => void;
