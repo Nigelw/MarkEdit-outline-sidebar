@@ -2,11 +2,20 @@
 
 ## Unreleased
 
+## 1.2.0 (2026-07-19)
+
+### New
+
+- Added support for Bidirectional Preview Sync extension: https://github.com/Nigelw/MarkEdit-bidirectional-preview-sync
+
+### Improved
+
+- Added truncation notice when outline sidebar can’t show all headings in very large documents.
+
 ### Fixed
 
-- Outline clicks now signal bidirectional scroll sync before editor navigation,
-  letting the sync extension own smooth preview movement instead of directly
-  scrolling the preview pane.
+- "Highlight Follows Insertion Point” mode works consistently across Edit and Preview views. (Preview mode used to always follow scroll.)
+- Clicking outline items now always uses smooth scrolling in Preview mode. (Behavior used to vary depending on scroll sync settings.)
 
 ## 1.1.2 (2026-07-19)
 

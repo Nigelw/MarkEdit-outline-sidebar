@@ -1,6 +1,6 @@
 {
   "name": "markedit-outline",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "A table-of-contents / outline sidebar for MarkEdit, usable in both edit and preview modes.",
   "license": "MIT",
   "scripts": {
