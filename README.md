@@ -81,7 +81,7 @@ If you want to customize the toolbar icon, `icon` can be set to any [SF Symbol](
 
 ## Positioning
 
-The sidebar can dock to either edge of the window. Switch sides from *Extensions → Outline Sidebar → **Dock Left** / **Dock Right***; it writes your choice to `settings.json` and prompts a restart to apply. You can also set it directly with the `position` setting below.
+The sidebar can dock to either edge of the window. Switch sides from *Extensions → Outline Sidebar → **Dock Left** / **Dock Right***; it applies immediately and writes your choice to `settings.json`. You can also set it directly with the `position` setting below.
 
 Resize the sidebar by dragging the divider between it and the editor — the width is remembered automatically.
 
