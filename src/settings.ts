@@ -9,8 +9,7 @@ export type Position = 'left' | 'right';
 /**
  * What drives the highlighted outline item:
  * - `scroll`: the section currently in view (the visible viewport in every mode)
- * - `insertionPoint`: the section the cursor is in when editing; still the
- *   visible section in preview, where there is no cursor to follow
+ * - `insertionPoint`: the section the editor cursor is in, even when preview is visible
  */
 export type HighlightMode = 'scroll' | 'insertionPoint';
 

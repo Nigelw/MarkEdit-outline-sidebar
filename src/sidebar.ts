@@ -173,10 +173,9 @@ export class OutlineSidebar {
   }
 
   /**
-   * Highlight the section currently in view. One rule for every mode: the item
-   * that matches the reference line of the pane you're looking at — the preview
-   * when it's showing full-screen, otherwise the editor viewport. The caret does
-   * not drive the highlight, so it can't drift out of step with what's on screen.
+   * Highlight the active section under the selected rule. In insertion-point
+   * mode, the editor selection remains the source of truth even when preview is
+   * the visible surface.
    */
   updateActive(): void {
     if (!this.mounted || !this.opened || this.items.length === 0) {
@@ -187,6 +186,9 @@ export class OutlineSidebar {
 
   /** The active heading index for whichever pane is the visible surface. */
   private activeInView(): number {
+    if (this.settings.highlightMode === 'insertionPoint') {
+      return this.activeInEditor();
+    }
     if (isPreviewOverlayActive()) {
       const preview = activePreviewHeadingIndex(this.headings);
       // Fall back to the editor only when there's genuinely no preview to read
@@ -199,7 +201,7 @@ export class OutlineSidebar {
   /**
    * The active heading for the editor pane, per the highlight mode: the section
    * the cursor sits in (`insertionPoint`) or the section at the top of the
-   * viewport (`scroll`). Preview always follows scroll — there's no cursor there.
+   * viewport (`scroll`).
    */
   private activeInEditor(): number {
     if (this.settings.highlightMode === 'insertionPoint') {
@@ -218,12 +220,11 @@ export class OutlineSidebar {
   }
 
   /**
-   * Re-evaluate on a cursor move. Only relevant in `insertionPoint` mode with
-   * the editor visible; in `scroll` mode the cursor doesn't drive the highlight,
-   * and in preview there's no cursor (reacting there would fight preview nav).
+   * Re-evaluate on a cursor move. Only relevant in `insertionPoint` mode; in
+   * `scroll` mode the cursor doesn't drive the highlight.
    */
   onSelectionChange(): void {
-    if (this.settings.highlightMode !== 'insertionPoint' || isPreviewOverlayActive()) {
+    if (this.settings.highlightMode !== 'insertionPoint') {
       return;
     }
     this.updateActive();
@@ -251,8 +252,8 @@ export class OutlineSidebar {
   }
 
   /**
-   * Track the preview's scroll position so the highlighted item follows what
-   * you're reading in preview / side-by-side mode (where the caret doesn't move).
+   * Track scroll position so the highlighted item follows what you're reading
+   * when highlight mode is `scroll`.
    * A single capture-phase listener on `document` catches scroll events from
    * whichever preview container is live, so it survives mode switches and preview
    * re-renders without any per-element observer bookkeeping.
@@ -287,17 +288,16 @@ export class OutlineSidebar {
    * the highlight — e.g. the hidden editor scrolling behind a full-screen preview.
    */
   private activeForScroll(target: EventTarget | null): number {
+    if (this.settings.highlightMode === 'insertionPoint') {
+      return this.activeIndex;
+    }
+
     const scroller = MarkEdit.editorView.scrollDOM;
     const fromEditor = target instanceof Node && (target === scroller || scroller.contains(target));
     if (fromEditor) {
       // In full-screen preview the editor is hidden behind the overlay yet still
       // emits scroll (e.g. when navigating); the preview is what you see.
       if (isPreviewOverlayActive()) {
-        return this.activeIndex;
-      }
-      // In insertion-point mode, scrolling the editor without moving the cursor
-      // must not move the highlight — the cursor still decides.
-      if (this.settings.highlightMode === 'insertionPoint') {
         return this.activeIndex;
       }
       return activeEditorHeadingIndex(this.headings);

@@ -90,7 +90,7 @@ Resize the sidebar by dragging the divider between it and the editor — the wid
 The current section is highlighted in the outline as you move through the document. There are two highlighting modes, switchable live from *Extensions → Outline Sidebar → **Highlight Follows Scroll** / **Highlight Follows Insertion Point*** (or with the `highlightMode` setting below):
 
 - **Follows Scroll** *(default)* — the highlight tracks the section you're viewing, following the editor or preview as you scroll.
-- **Follows Insertion Point** — the highlight tracks the section your cursor is in while editing. In preview there's no cursor, so it still follows the scroll position.
+- **Follows Insertion Point** — the highlight tracks the section your editor cursor is in, including while preview is visible.
 
 ## Configuration
 

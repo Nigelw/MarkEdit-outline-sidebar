@@ -182,15 +182,15 @@ function isPreviewScrollSyncEnabled(): boolean {
 }
 
 /**
- * Align a heading to the top of the preview pane by setting the scroll
- * container's `scrollTop` directly. Unlike `scrollIntoView`, this is idempotent:
- * clicking the same outline item again computes the same target and only moves
- * when it actually differs, so the viewport stays put on repeat clicks.
+ * Align a heading to the top of the preview pane. Unlike `scrollIntoView`, this
+ * is idempotent: clicking the same outline item again computes the same target
+ * and only moves when it actually differs, so the viewport stays put on repeat
+ * clicks.
  */
 function alignPreviewHeading(target: HTMLElement): void {
   const container = getScrollContainer(target);
   if (container === undefined) {
-    target.scrollIntoView({ block: 'start', behavior: 'auto' });
+    target.scrollIntoView({ block: 'start', behavior: 'smooth' });
     return;
   }
 
@@ -202,7 +202,7 @@ function alignPreviewHeading(target: HTMLElement): void {
 
   // Only scroll when the target isn't already aligned (>1px guards sub-pixel jitter).
   if (Math.abs(desired - current) > 1) {
-    container.scrollTop = desired;
+    container.scrollTo({ top: desired, behavior: 'smooth' });
   }
 }
 
