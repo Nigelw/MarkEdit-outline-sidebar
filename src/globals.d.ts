@@ -18,5 +18,8 @@ interface Window {
   };
   __markeditBidirectionalScrollSync__?: {
     isActive?: boolean;
+    beginScroll?: (source: 'editor' | 'preview', options?: { animated?: boolean }) => void;
+    beginPreviewScroll?: (options?: { animated?: boolean }) => void;
+    beginEditorScroll?: (options?: { animated?: boolean }) => void;
   };
 }

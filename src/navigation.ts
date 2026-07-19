@@ -14,7 +14,8 @@ import { activeHeadingIndex, type Heading } from './toc';
  *   scroll is idempotent, clicking the same item again doesn't move the editor,
  *   so no scroll event fires, the sync doesn't re-run, and the viewport stays put.
  * - Sync OFF: nothing else moves the preview, so we scroll it ourselves unless
- *   another scroll-sync extension has advertised that it owns synchronization.
+ *   the bidirectional sync extension is active. In that case, we signal that the
+ *   editor navigation is intentional and leave preview movement to sync.
  */
 export function goToHeading(headings: Heading[], index: number, syncPreview: boolean): void {
   const heading = headings[index];
@@ -35,6 +36,10 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
     ? EditorView.scrollIntoView(pos, { y: 'center' })
     : EditorView.scrollIntoView(pos, { y: 'start', yMargin: 8 });
 
+  if (syncPreview && !isPreviewScrollSyncEnabled() && isBidirectionalScrollSyncActive()) {
+    window.__markeditBidirectionalScrollSync__?.beginEditorScroll?.({ animated: true });
+  }
+
   view.dispatch({
     selection: EditorSelection.cursor(pos),
     effects: scrollEffect,
@@ -48,8 +53,6 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
   if (syncPreview) {
     const target = findPreviewHeading(headings, index);
     if (target !== undefined) {
-      // When a sync extension owns editor->preview movement, leave the preview
-      // to it. Scrolling the preview here too can create correction jumps.
       if (!isPreviewScrollSyncEnabled() && !isBidirectionalScrollSyncActive()) {
         document.querySelectorAll<HTMLElement>('.markdown-body span.meo-flash').forEach(unwrapSpan);
         alignPreviewHeading(target);

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixed
+
+- Outline clicks now signal bidirectional scroll sync before editor navigation,
+  letting the sync extension own smooth preview movement instead of directly
+  scrolling the preview pane.
+
 ## 1.1.2 (2026-07-19)
 
 ### Improved
