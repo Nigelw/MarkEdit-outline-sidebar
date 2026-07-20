@@ -38,30 +38,43 @@ published copy of the build, and the README points people at the release downloa
 1. **Bump the version** in `package.json` to the new version (no `v` prefix). Edit the file
    directly — don't run `npm version`, which also creates a tag and would fight step 7.
 
-2. **Update `CHANGELOG.md` — suggest, then let the user edit and confirm.** This is a required,
-   interactive step; do not silently generate the final changelog.
+2. **Update `CHANGELOG.md` — draft, let the user edit, then confirm.** This is a required,
+   interactive step; do not continue until the user explicitly approves the changelog section.
 
    1. **Gather the commits since the previous release.** Find the previous tag with
       `git describe --tags --abbrev=0` (this returns the latest existing tag, i.e. the previous
       release, since the new one isn't tagged yet). Then list the commits:
-      `git log <prev-tag>..HEAD --pretty=format:'%s%n%b%x1e'`. If there's no previous tag (first
-      release), use `git log --pretty=format:'%s%n%b%x1e'` over all history.
-   2. **Draft suggested entries**, grouped under `### New`, `### Improved`, and `### Fixed`
-      (include only the groups that have items). Translate commit subjects into **user-facing**
-      language — describe what changed for the user, not the internal commit wording — and merge
-      related commits into one bullet. Skip noise: release/version-bump commits, pure-docs or
-      CI/chore commits, merge commits, and anything with no user-visible effect. Also fold in
-      anything already sitting under the `## Unreleased` heading.
-   3. **Present the draft to the user and ask them to edit and confirm it.** Show the proposed
-      `### New/Improved/Fixed` bullets and explicitly invite changes (add, remove, reword,
-      regroup). **Do not write the file until the user approves.** Iterate on their edits until
-      they confirm.
-   4. **Write the approved entries into `CHANGELOG.md`:** replace the empty `## Unreleased`
-      section with a new `## <version> (<YYYY-MM-DD>)` heading (today's date) holding the
-      confirmed content, and leave a fresh empty `## Unreleased` section above it. Preserve the
-      existing `# Changelog` title and all older version sections. Keep the format identical to
-      the existing entries (Keep a Changelog style: `### New/Improved/Fixed`, `-` bullets,
-      two-space-indented nested bullets).
+      `git log --no-merges <prev-tag>..HEAD --pretty='%s%n%b'`. If there's no previous tag (first
+      release), use `git log --no-merges --pretty='%s%n%b'` over all history.
+   2. **Move the `CHANGELOG.md` `Unreleased` notes** into a new release section for the chosen
+      version:
+      ```markdown
+      ## <version> (YYYY-MM-DD)
+
+      ### New
+
+      - ...
+      ```
+      Leave a fresh empty `## Unreleased` section above it, preserve the existing `# Changelog`
+      title and all older version sections, and keep the format identical to the existing entries
+      (Keep a Changelog style: `### New/Improved/Fixed`, `-` bullets, two-space-indented nested
+      bullets).
+   3. **If `Unreleased` is empty, draft the section from the commits.** Author short
+      user-facing Markdown, applying these rules:
+      - Draft release note entries under `### New`, `### Improved`, and `### Fixed` headings, in
+        that order. Omit a bucket if it has no entries.
+      - Rewrite every entry from the user's perspective. Describe what changed for someone using
+        the extension.
+      - Drop anything with no user-visible impact, including internal refactors, tests, CI,
+        dependency bumps, and documentation-only edits.
+      - Use one succinct line per entry, with no jargon, file names, symbols, or implementation
+        detail.
+      - Merge related commits into one bullet, and skip release/version-bump commits.
+   4. **Write the draft section into `CHANGELOG.md`, then let the user review or edit it.** Show
+      the new `CHANGELOG.md` section in the conversation, offer to open the file with
+      `${EDITOR:-${VISUAL:-open}} CHANGELOG.md`, or take edits in conversation.
+   5. **Get explicit confirmation before continuing.** Iterate on any edits the user requests.
+      The confirmed `CHANGELOG.md` section is the source for the GitHub release body in step 9.
 
 3. **Typecheck**: `npm run typecheck`. Fix or report any errors before continuing.
 
