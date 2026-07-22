@@ -44,7 +44,7 @@ src/styles.ts        Panel CSS (theme-driven via CSS variables)
 
 ## Releases
 
-Releases are cut with the **`release` skill** (`.claude/skills/release/SKILL.md`) — run `/release` (or ask Claude Code to "cut a release"). It bumps the version, updates the `CHANGELOG.md`, rebuilds, commits, tags `vX.Y.Z`, pushes, and publishes a GitHub release **with `dist/markedit-outline.js` attached as an asset**.
+Releases are cut with the **`release` skill** (`.agents/skills/release/SKILL.md`) — run `/release` (or ask Claude Code to "cut a release"). It bumps the version, updates the `CHANGELOG.md`, rebuilds, commits, tags `vX.Y.Z`, pushes, and publishes a GitHub release **with `dist/markedit-outline.js` attached as an asset**.
 
 The updater uses **Method B**: it downloads the release asset named `markedit-outline.js` (via its `browser_download_url` from the `releases/latest` API response). For a release to be installable, **all of these must agree**:
 

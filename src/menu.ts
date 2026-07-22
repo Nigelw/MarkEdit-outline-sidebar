@@ -1,5 +1,5 @@
 import { MarkEdit } from 'markedit-api';
-import { TOGGLE_ACTION_TITLE, REPO_URL } from './constants';
+import { TOGGLE_ACTION_TITLE, REPO_URL, CHANGELOG_URL } from './constants';
 import { addToolbarItem, removeToolbarItem } from './toolbar';
 import { setSidebarPosition } from './position';
 import { setHighlightMode } from './highlight';
@@ -62,6 +62,10 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
       {
         title: 'Visit GitHub Project',
         action: () => openURL(REPO_URL),
+      },
+      {
+        title: 'View Release Notes',
+        action: () => openURL(CHANGELOG_URL),
       },
       {
         title: 'Check for Updates…',

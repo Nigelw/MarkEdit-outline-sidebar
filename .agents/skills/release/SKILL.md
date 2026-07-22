@@ -46,8 +46,8 @@ published copy of the build, and the README points people at the release downloa
       release, since the new one isn't tagged yet). Then list the commits:
       `git log --no-merges <prev-tag>..HEAD --pretty='%s%n%b'`. If there's no previous tag (first
       release), use `git log --no-merges --pretty='%s%n%b'` over all history.
-   2. **Move the `CHANGELOG.md` `Unreleased` notes** into a new release section for the chosen
-      version:
+   2. **Create a new `CHANGELOG.md` release section** for the chosen version directly under the
+      `# Changelog` title:
       ```markdown
       ## <version> (YYYY-MM-DD)
 
@@ -55,12 +55,11 @@ published copy of the build, and the README points people at the release downloa
 
       - ...
       ```
-      Leave a fresh empty `## Unreleased` section above it, preserve the existing `# Changelog`
-      title and all older version sections, and keep the format identical to the existing entries
-      (Keep a Changelog style: `### New/Improved/Fixed`, `-` bullets, two-space-indented nested
-      bullets).
-   3. **If `Unreleased` is empty, draft the section from the commits.** Author short
-      user-facing Markdown, applying these rules:
+      Preserve the existing `# Changelog` title and all older version sections, and keep the
+      format identical to the existing entries (Keep a Changelog style: `### New/Improved/Fixed`,
+      `-` bullets, two-space-indented nested bullets).
+   3. **Draft the section from the commits.** Author short user-facing Markdown, applying these
+      rules:
       - Draft release note entries under `### New`, `### Improved`, and `### Fixed` headings, in
         that order. Omit a bucket if it has no entries.
       - Rewrite every entry from the user's perspective. Describe what changed for someone using
