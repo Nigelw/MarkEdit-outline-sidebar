@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.2 (2026-07-24)
+
+### Improved
+
+- The highlighted item background is now based on the macOS accent color.
+
+### Fixed
+
+- Clicking a heading located near the bottom of a document in preview mode now keeps that heading highlighted.
+
 ## 1.2.1 (2026-07-22)
 
 ### New
