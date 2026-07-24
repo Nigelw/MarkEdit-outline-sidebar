@@ -44,6 +44,7 @@ export function goToHeading(headings: Heading[], index: number, syncPreview: boo
     selection: EditorSelection.cursor(pos),
     effects: scrollEffect,
   });
+  alignEditorPosition(pos, typewriterMode);
 
   // Don't steal focus into the editor while it's hidden behind the preview overlay.
   if (!isPreviewOverlayActive()) {
@@ -185,6 +186,29 @@ function isPreviewScrollSyncEnabled(): boolean {
 
 function isBidirectionalPreviewSyncActive(): boolean {
   return window.__markeditBidirectionalPreviewSync__?.isActive === true;
+}
+
+function alignEditorPosition(pos: number, center: boolean): void {
+  const view = MarkEdit.editorView;
+  view.requestMeasure({
+    read: () => {
+      const scroller = view.scrollDOM;
+      const rect = scroller.getBoundingClientRect();
+      const block = view.lineBlockAt(pos);
+      const blockTop = view.documentTop + block.top;
+      const offset = blockTop - rect.top;
+      const targetOffset = center ? (rect.height - block.height) / 2 : 8;
+      const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+
+      return Math.max(0, Math.min(maxScroll, Math.round(scroller.scrollTop + offset - targetOffset)));
+    },
+    write: (desired) => {
+      const scroller = view.scrollDOM;
+      if (Math.abs(desired - scroller.scrollTop) > 1) {
+        scroller.scrollTo({ top: desired });
+      }
+    },
+  });
 }
 
 /**
