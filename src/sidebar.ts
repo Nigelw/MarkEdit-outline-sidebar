@@ -13,6 +13,8 @@ import type { HighlightMode, OutlineSettings, Position } from './settings';
 
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 160;
+const SCROLL_SOURCE_HOLD_MS = 1400;
+type ScrollSource = 'editor' | 'preview';
 
 export class OutlineSidebar {
   private settings: OutlineSettings;
@@ -36,6 +38,8 @@ export class OutlineSidebar {
   private readonly scrollHandler = (event: Event) => this.onDocumentScroll(event);
   private readonly userScrollIntentHandler = (event: Event) => this.onUserScrollIntent(event);
   private spyScheduled = false;
+  private scrollSource: ScrollSource | undefined;
+  private scrollSourceTimer: ReturnType<typeof setTimeout> | undefined;
 
   private modeObserver?: MutationObserver;
   private modeSignature = 'edit';
@@ -145,6 +149,7 @@ export class OutlineSidebar {
     this.modeObserver?.disconnect();
     this.modeObserver = undefined;
     this.navigationHoldIndex = undefined;
+    this.clearScrollSource();
     this.persistVisibility();
   }
 
@@ -281,6 +286,17 @@ export class OutlineSidebar {
     if (target instanceof HTMLElement && target.closest('.meo-sidebar')) {
       return;
     }
+    if (previewModeSignature() === 'split') {
+      const source = this.scrollSourceForTarget(target);
+      if (source !== undefined) {
+        if (this.scrollSource !== undefined && this.scrollSource !== source) {
+          this.extendScrollSourceHold();
+          return;
+        }
+        this.scrollSource = source;
+        this.extendScrollSourceHold();
+      }
+    }
     // Coalesce bursts of scroll events into one recompute per frame.
     if (this.spyScheduled) {
       return;
@@ -307,10 +323,6 @@ export class OutlineSidebar {
    * gives the document an explicit scroll input.
    */
   private onUserScrollIntent(event: Event): void {
-    if (this.navigationHoldIndex === undefined) {
-      return;
-    }
-
     const target = event.target;
     if (target instanceof HTMLElement && target.closest('.meo-sidebar')) {
       return;
@@ -319,6 +331,16 @@ export class OutlineSidebar {
       return;
     }
 
+    if (!(event instanceof KeyboardEvent)) {
+      const source = this.scrollSourceForTarget(target);
+      if (source !== undefined) {
+        this.setScrollSource(source);
+      }
+    }
+
+    if (this.navigationHoldIndex === undefined) {
+      return;
+    }
     this.navigationHoldIndex = undefined;
   }
 
@@ -334,7 +356,7 @@ export class OutlineSidebar {
     }
 
     const scroller = MarkEdit.editorView.scrollDOM;
-    const fromEditor = target instanceof Node && (target === scroller || scroller.contains(target));
+    const fromEditor = this.scrollSourceForTarget(target) === 'editor';
     if (fromEditor) {
       // In full-screen preview the editor is hidden behind the overlay yet still
       // emits scroll (e.g. when navigating); the preview is what you see.
@@ -344,6 +366,44 @@ export class OutlineSidebar {
       return activeEditorHeadingIndex(this.headings);
     }
     return activePreviewHeadingIndex(this.headings) ?? this.activeIndex;
+  }
+
+  private scrollSourceForTarget(target: EventTarget | null): ScrollSource | undefined {
+    if (!(target instanceof Node)) {
+      return undefined;
+    }
+
+    const scroller = MarkEdit.editorView.scrollDOM;
+    if (target === scroller || scroller.contains(target)) {
+      return 'editor';
+    }
+
+    const preview = visiblePreviewPane();
+    if (preview !== undefined && (target === preview || preview.contains(target) || target.contains(preview))) {
+      return 'preview';
+    }
+
+    return undefined;
+  }
+
+  private setScrollSource(source: ScrollSource): void {
+    this.scrollSource = source;
+    this.extendScrollSourceHold();
+  }
+
+  private extendScrollSourceHold(): void {
+    if (this.scrollSourceTimer !== undefined) {
+      clearTimeout(this.scrollSourceTimer);
+    }
+    this.scrollSourceTimer = setTimeout(() => this.clearScrollSource(), SCROLL_SOURCE_HOLD_MS);
+  }
+
+  private clearScrollSource(): void {
+    if (this.scrollSourceTimer !== undefined) {
+      clearTimeout(this.scrollSourceTimer);
+      this.scrollSourceTimer = undefined;
+    }
+    this.scrollSource = undefined;
   }
 
   /**
@@ -669,6 +729,16 @@ function readStoredVisibility(): boolean | undefined {
     // localStorage unavailable.
   }
   return undefined;
+}
+
+function visiblePreviewPane(): HTMLElement | undefined {
+  const panes = Array.from(document.querySelectorAll<HTMLElement>('.markdown-body'));
+  return panes.find(isDisplayed);
+}
+
+function isDisplayed(el: HTMLElement): boolean {
+  const rect = el.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0 && getComputedStyle(el).display !== 'none';
 }
 
 function isScrollKey(event: KeyboardEvent): boolean {
