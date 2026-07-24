@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.3 (2026-07-24)
+
+### Fixed
+
+- Fixed an issue where clicking on the first heading in some documents wouldn’t scroll the view in edit mode.
+- In side-by-side mode, the highlighted outline item no longer jumps around after you finish scrolling the preview pane.
+
 ## 1.2.2 (2026-07-24)
 
 ### Improved
