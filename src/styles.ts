@@ -92,9 +92,7 @@ html.meo-push-left .cm-md-activeLine {
 }
 .meo-item.meo-active {
   background: var(--meo-active-bg, #e8e8e8);
-  /* Inset shadow rather than a left border: it respects border-radius, so it
-     can't leave dark fringes at the rounded corners. */
-  box-shadow: inset 2px 0 0 0 var(--meo-accent, AccentColor);
+  background: color-mix(in srgb, var(--meo-accent, AccentColor) var(--meo-active-accent-mix, 18%), var(--meo-bg, #fafafa));
   font-weight: 600;
 }
 .meo-item[data-level="1"] { padding-left: 8px; font-weight: 600; }

@@ -617,16 +617,18 @@ export class OutlineSidebar {
 
     const { bg, fg } = this.readEditorColors();
     const dark = isDarkColor(bg);
+    const panelBg = dark ? lighten(bg, 8) : '#fafafa';
 
     const set = (name: string, value: string) => this.root.style.setProperty(name, value);
     // Panel background: a fixed #fafafa in light mode (a hair off the white
     // editor, so the color alone separates the two); in dark mode a subtle
     // lightening of the editor background for the same effect. Hover/active are
     // solid (not translucent) so rounded corners stay clean.
-    set('--meo-bg', dark ? lighten(bg, 8) : '#fafafa');
+    set('--meo-bg', panelBg);
     set('--meo-fg', fg);
     set('--meo-hover', dark ? lighten(bg, 22) : '#f0f0f0');
     set('--meo-active-bg', dark ? lighten(bg, 32) : '#e8e8e8');
+    set('--meo-active-accent-mix', dark ? '30%' : '18%');
     set('--meo-accent', 'AccentColor');
 
     // The preview-navigation flash is applied to preview headings, which live
