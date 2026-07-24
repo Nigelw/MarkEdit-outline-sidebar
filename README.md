@@ -2,7 +2,7 @@
 
 A table-of-contents / outline **sidebar** for [MarkEdit](https://github.com/MarkEdit-app/MarkEdit).
 
-MarkEdit features a built-in toolbar button that displays a Table of Contents in a popover. This extension is similar, but makes the ToC a persistent **sidebar** you can show or hide. It highlights your current section and lets you jump around the document by clicking headings in both **edit** and **preview** modes. It also plays nicely with my [Bidirectional Preview Sync](https://github.com/Nigelw/MarkEdit-bidirectional-preview-sync) extension.
+MarkEdit features a built-in toolbar button that displays a Table of Contents in a popover. This extension is similar, but makes the ToC a persistent sidebar you can show or hide. It highlights your current section and lets you jump around the document by clicking headings in both edit and preview modes. It also plays nicely with my [Bidirectional Preview Sync](https://github.com/Nigelw/MarkEdit-bidirectional-preview-sync) extension.
 
 ![The Outline Sidebar in MarkEdit, listing a document's headings with the current section highlighted](assets/screenshot.png)
 
@@ -14,7 +14,7 @@ MarkEdit features a built-in toolbar button that displays a Table of Contents in
 - **Dock left or right**: position the sidebar on either side of the window.
 - **Resizable**: drag the divider to resize it.
 - **Click to navigate**: clicking a heading scrolls the editor to it and moves the caret there.
-- **Live updates**: the outline rebuilds as you type (debounced) and re-highlights as you move around.
+- **Live updates**: the outline rebuilds as you type and re-highlights as you move around.
 - **Preview mode support**: when the [MarkEdit-preview](https://github.com/MarkEdit-app/MarkEdit-preview) extension is showing a preview, clicking a heading scrolls the rendered preview to the matching heading and briefly highlights it. This works whether preview's syncScroll setting is enabled or disabled.
 - **Restores state**: the extension remembers whether the sidebar was open or closed, which side it's docked to, and how wide it is across app launches.
 - **Multiple ways to toggle**: a keyboard shortcut, an Extensions menu command, and an optional **native toolbar button** (see *Toggling* below).
@@ -24,14 +24,14 @@ MarkEdit features a built-in toolbar button that displays a Table of Contents in
 ## Install
 
 **The easy way:**
-1. Download the [latest release](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases/latest).
+1. [Download the latest release](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases/latest).
 2. Copy `markedit-outline.js` into MarkEdit's scripts folder:
 
 ```
 ~/Library/Containers/app.cyan.markedit/Data/Documents/scripts/
 ```
 
-3. Relaunch MarkEdit. After that the extension [keeps itself up to date](#staying-up-to-date) — no need to download it again by hand.
+3. Relaunch MarkEdit. After that the extension [keeps itself up to date](#staying-up-to-date) so there's no need to download it again by hand.
 
 **Or install and build from source:**
 
@@ -40,8 +40,6 @@ npm install
 npm run build     # builds dist/ and copies it into the scripts folder
 npm run reload    # quit + relaunch MarkEdit to load the new build
 ```
-
-See the [MarkEdit Customization guide](https://github.com/MarkEdit-app/MarkEdit/wiki/Customization) for how user scripts are loaded.
 
 ## Toggling the sidebar
 
