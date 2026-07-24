@@ -31,8 +31,10 @@ export class OutlineSidebar {
   private truncated = false;
   private items: HTMLElement[] = [];
   private activeIndex = -1;
+  private navigationHoldIndex: number | undefined;
 
   private readonly scrollHandler = (event: Event) => this.onDocumentScroll(event);
+  private readonly userScrollIntentHandler = (event: Event) => this.onUserScrollIntent(event);
   private spyScheduled = false;
 
   private modeObserver?: MutationObserver;
@@ -113,6 +115,9 @@ export class OutlineSidebar {
     // Capture phase so we catch scroll from the preview's own container, which
     // doesn't bubble. Passive: we never call preventDefault.
     document.addEventListener('scroll', this.scrollHandler, { capture: true, passive: true });
+    document.addEventListener('wheel', this.userScrollIntentHandler, { capture: true, passive: true });
+    document.addEventListener('touchstart', this.userScrollIntentHandler, { capture: true, passive: true });
+    document.addEventListener('keydown', this.userScrollIntentHandler, { capture: true });
     // Switching edit/preview modes fires no scroll or caret event, so watch the
     // DOM for the preview surface appearing/disappearing and re-seed then.
     this.modeSignature = previewModeSignature();
@@ -134,8 +139,12 @@ export class OutlineSidebar {
     this.root.classList.remove('meo-open');
     this.pushEditor(false);
     document.removeEventListener('scroll', this.scrollHandler, { capture: true });
+    document.removeEventListener('wheel', this.userScrollIntentHandler, { capture: true });
+    document.removeEventListener('touchstart', this.userScrollIntentHandler, { capture: true });
+    document.removeEventListener('keydown', this.userScrollIntentHandler, { capture: true });
     this.modeObserver?.disconnect();
     this.modeObserver = undefined;
+    this.navigationHoldIndex = undefined;
     this.persistVisibility();
   }
 
@@ -172,6 +181,7 @@ export class OutlineSidebar {
     const extracted = extractHeadings(MarkEdit.editorView.state);
     this.headings = extracted.headings;
     this.truncated = extracted.truncated;
+    this.navigationHoldIndex = undefined;
     this.renderList();
     this.updateActive();
   }
@@ -281,8 +291,35 @@ export class OutlineSidebar {
       if (!this.opened) {
         return;
       }
+      if (this.navigationHoldIndex !== undefined && this.items[this.navigationHoldIndex] !== undefined) {
+        this.setActive(this.navigationHoldIndex);
+        return;
+      }
       this.setActive(this.activeForScroll(target));
     });
+  }
+
+  /**
+   * A sidebar click scrolls the editor/preview programmatically. Near the end of
+   * a document, the target heading may be unable to reach the scroll-spy trigger
+   * line, so the normal scroll recompute would immediately move the highlight
+   * back to the previous section. Keep the clicked item selected until the user
+   * gives the document an explicit scroll input.
+   */
+  private onUserScrollIntent(event: Event): void {
+    if (this.navigationHoldIndex === undefined) {
+      return;
+    }
+
+    const target = event.target;
+    if (target instanceof HTMLElement && target.closest('.meo-sidebar')) {
+      return;
+    }
+    if (event instanceof KeyboardEvent && !isScrollKey(event)) {
+      return;
+    }
+
+    this.navigationHoldIndex = undefined;
   }
 
   /**
@@ -480,6 +517,9 @@ export class OutlineSidebar {
     }
     // Direct manipulation wins immediately; the scroll-spy then keeps it there.
     this.setActive(index);
+    if (this.settings.highlightMode === 'scroll') {
+      this.navigationHoldIndex = index;
+    }
     goToHeading(this.headings, index, true);
   }
 
@@ -627,6 +667,20 @@ function readStoredVisibility(): boolean | undefined {
     // localStorage unavailable.
   }
   return undefined;
+}
+
+function isScrollKey(event: KeyboardEvent): boolean {
+  return [
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'End',
+    'Home',
+    'PageDown',
+    'PageUp',
+    ' ',
+  ].includes(event.key);
 }
 
 function firstOpaqueColor(candidates: string[]): string | undefined {
