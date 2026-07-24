@@ -1,6 +1,6 @@
 # MarkEdit Outline Sidebar
 
-A table-of-contents / outline **sidebar** for [MarkEdit](https://github.com/MarkEdit-app/MarkEdit).
+A table-of-contents / outline sidebar for [MarkEdit](https://github.com/MarkEdit-app/MarkEdit).
 
 MarkEdit features a built-in toolbar button that displays a Table of Contents in a popover. This extension is similar, but makes the ToC a persistent sidebar you can show or hide. It highlights your current section and lets you jump around the document by clicking headings in both edit and preview modes. It also plays nicely with my [Bidirectional Preview Sync](https://github.com/Nigelw/MarkEdit-bidirectional-preview-sync) extension.
 
