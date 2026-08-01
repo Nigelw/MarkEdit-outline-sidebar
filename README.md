@@ -16,7 +16,7 @@ MarkEdit features a built-in toolbar button that displays a Table of Contents in
 - **Preview mode support**: when the [MarkEdit-preview](https://github.com/MarkEdit-app/MarkEdit-preview) extension is showing a preview, clicking a heading scrolls the rendered preview to the matching heading and briefly highlights it. This works whether preview's syncScroll setting is enabled or disabled.
 - **Restores state**: the extension remembers whether the sidebar was open or closed, which side it's docked to, and how wide it is across app launches.
 - **Multiple ways to toggle**: a keyboard shortcut, an Extensions menu command, and an optional **native toolbar button** (see *Toggling* below).
-- **Theme-aware**: the panel reads colors from the live editor theme, so it matches MarkEdit's light, dark, and custom themes automatically.
+- **Theme-aware**: the panel reads colors from the live editor theme and your system’s accent color, so it matches MarkEdit's light, dark, and custom themes automatically.
 - **Managed updates**: once installed from MarkEdit's Extension Manager, new versions are delivered by MarkEdit's centrally managed update system.
 
 ## Install
