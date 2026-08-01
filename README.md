@@ -6,8 +6,6 @@ MarkEdit features a built-in toolbar button that displays a Table of Contents in
 
 ![The Outline Sidebar in MarkEdit, listing a document's headings with the current section highlighted](assets/screenshot.png)
 
-**[⬇ Download the latest release](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases/latest/download/markedit-outline.js)** then see [Install](#install) below.
-
 ## Features
 
 - **Sidebar** listing every heading, indented by level, with the current section highlighted.
@@ -19,19 +17,11 @@ MarkEdit features a built-in toolbar button that displays a Table of Contents in
 - **Restores state**: the extension remembers whether the sidebar was open or closed, which side it's docked to, and how wide it is across app launches.
 - **Multiple ways to toggle**: a keyboard shortcut, an Extensions menu command, and an optional **native toolbar button** (see *Toggling* below).
 - **Theme-aware**: the panel reads colors from the live editor theme, so it matches MarkEdit's light, dark, and custom themes automatically.
-- **Keeps itself up to date**: checks GitHub for new versions and can install them for you (see *Staying up to date* below).
+- **Managed updates**: once installed from MarkEdit's Extension Manager, new versions are delivered by MarkEdit's centrally managed update system.
 
 ## Install
 
-**The easy way:**
-1. [Download the latest release](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases/latest).
-2. Copy `markedit-outline.js` into MarkEdit's scripts folder:
-
-```
-~/Library/Containers/app.cyan.markedit/Data/Documents/scripts/
-```
-
-3. Relaunch MarkEdit. After that the extension [keeps itself up to date](#staying-up-to-date) so there's no need to download it again by hand.
+Install it from MarkEdit's **Extension Manager**. MarkEdit manages subsequent updates from the official extension registry.
 
 **Or install and build from source:**
 
@@ -100,29 +90,12 @@ Add an `extension.markeditOutlineSidebar` object to your MarkEdit [`settings.jso
     "position": "right",          // "right" | "left" — which edge to dock to
     "onLaunch": "remember",        // "remember" last state | "open" always | "closed" always
     "highlightMode": "scroll",     // "scroll" follows the view | "insertionPoint" follows the cursor
-    "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] },
-    "update": "notify"             // "automatic" | "notify" | "never" — see Staying up to date
+    "shortcut": { "key": "l", "modifiers": ["Command", "Shift"] }
   }
 }
 ```
 
 `shortcut.modifiers` may include `"Command"`, `"Shift"`, `"Control"`, and `"Option"`. The default is **⇧⌘L** because ⇧⌘O is already used by MarkEdit's built-in Table of Contents toolbar item.
-
-## Staying up to date
-
-The extension checks its [GitHub releases](https://github.com/Nigelw/MarkEdit-outline-sidebar/releases) for a newer version shortly after MarkEdit launches (at most once a week), and any time you run *Extensions → Outline Sidebar → **Check for Updates…***. When a newer release is found it can install the new build by replacing its own script file; the new version takes effect the next time you launch MarkEdit.
-
-The `update` setting controls how this behaves:
-
-| Value         | Behavior |
-| ------------- | -------- |
-| `"automatic"` | Download and install new versions silently, then let you know to restart. |
-| `"notify"`    | **(default)** Tell you when an update is available and ask before downloading. You can update now, skip that version, or be reminded later. |
-| `"never"`     | Don't check automatically. You can still check by hand with the menu command. |
-
-Skipping a version in `notify` mode means you won't be prompted for it again, though a later release will still be offered. *Check for Updates…* always checks regardless of the setting, and tells you when you're already up to date.
-
-> The updater downloads builds directly from this project's public GitHub repository over HTTPS. If you'd rather manage updates yourself, set `update` to `"never"`.
 
 ## Contributing
 

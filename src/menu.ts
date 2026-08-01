@@ -3,7 +3,6 @@ import { TOGGLE_ACTION_TITLE, REPO_URL, CHANGELOG_URL } from './constants';
 import { addToolbarItem, removeToolbarItem } from './toolbar';
 import { setSidebarPosition } from './position';
 import { setHighlightMode } from './highlight';
-import { checkForUpdates } from './updater';
 import type { OutlineSidebar } from './sidebar';
 import type { OutlineSettings } from './settings';
 
@@ -66,10 +65,6 @@ export function installMenu(settings: OutlineSettings, sidebar: OutlineSidebar):
       {
         title: 'View Release Notes',
         action: () => openURL(CHANGELOG_URL),
-      },
-      {
-        title: 'Check for Updates…',
-        action: () => void checkForUpdates(settings.update, true),
       },
     ],
   });

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0 (2026-07-31)
+
+### Improved
+
+- Internal updater removed in favor of centralized updates through MarkEdit’s Extension Manager.
+
 ## 1.2.3 (2026-07-24)
 
 ### Fixed

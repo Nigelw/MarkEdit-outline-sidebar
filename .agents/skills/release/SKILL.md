@@ -1,29 +1,22 @@
 ---
 name: release
-description: Cut a new release of the MarkEdit Outline Sidebar extension — bump the version, update the changelog, build, tag, push, and publish a GitHub release with the compiled bundle attached as an asset. Use when the user says "release", "cut a release", "ship a new version", "publish v1.2.0", or wants to make the in-app auto-updater offer a new build.
+description: Cut a new release of the MarkEdit Outline Sidebar extension — bump the version, update the changelog, build, commit the bundle, tag, push, publish release notes, and update the official registry. Use when the user says "release", "cut a release", "ship a new version", or "publish v1.2.0".
 ---
 
 # Release the MarkEdit Outline Sidebar
 
-This extension has an in-app self-updater (`src/updater.ts`). Installed copies poll
-`api.github.com/repos/Nigelw/MarkEdit-outline-sidebar/releases/latest`, compare the
-release's tag against their baked-in version, and — when a newer one exists — download the
-release's **`markedit-outline.js` asset** (via its `browser_download_url` from the release JSON)
-and overwrite their own script file with it. This is **Method B**: the build is served as a
-GitHub release asset, not from the repo tree.
+The official MarkEdit extension registry downloads a bundle from a raw GitHub URL pinned to
+the release tag and verifies its SHA-256. MarkEdit's Extension Manager centrally manages updates
+from that registry. So a release is installable when **all of these agree**:
 
-So a release is only usable by the updater if **all of these agree**:
-
-1. `package.json` `version` = the new version (this is baked into the bundle at build time).
+1. `package.json` `version` = the new version recorded in the registry entry.
 2. `dist/markedit-outline.js` is freshly rebuilt from that version.
-3. The GitHub release for `v<version>` has a **`markedit-outline.js` asset** that is exactly that
-   freshly-built bundle.
+3. The `v<version>` tag contains that exact `dist/markedit-outline.js` file.
+If the bundle and tag drift, the registry rejects the release. The steps below keep them in lockstep.
 
-If any drift (e.g. tagging without rebuilding, or uploading a stale asset), users download
-mismatched code. The steps below keep them in lockstep.
-
-`dist/` is **git-ignored** (a build artifact, not committed) — the release asset is the only
-published copy of the build, and the README points people at the release download.
+`dist/markedit-outline.js` is a committed release artifact. It must be committed before tagging
+so `https://raw.githubusercontent.com/Nigelw/MarkEdit-outline-sidebar/v<version>/dist/markedit-outline.js`
+is immutable and usable by the registry.
 
 ## Before starting
 
@@ -77,61 +70,50 @@ published copy of the build, and the README points people at the release downloa
 
 3. **Typecheck**: `npm run typecheck`. Fix or report any errors before continuing.
 
-4. **Build**: `npm run build`. This bakes the new `package.json` version into the bundle as
-   `__EXTENSION_VERSION__`, writes `dist/markedit-outline.js`, and deploys a copy into the local
-   MarkEdit scripts folder.
+4. **Build**: `npm run build`. This writes `dist/markedit-outline.js` and deploys a copy into the
+   local MarkEdit scripts folder.
 
-5. **Verify the bundle carries the new version**:
-   `grep -c "<new-version>" dist/markedit-outline.js` should be ≥ 1. If it's 0, the build didn't
-   pick up the bump — stop and investigate rather than shipping a mismatched build.
+5. **Verify the bundle was built**:
+   `test -s dist/markedit-outline.js` must succeed. If it doesn't, stop and investigate rather
+   than tagging a missing or empty registry artifact.
 
 6. **Commit** the release files:
-   `git add package.json CHANGELOG.md` then commit as `Release v<version>`. (`dist/` is
-   git-ignored, so it isn't committed — it's published as the release asset in step 9 instead.
+   `git add package.json CHANGELOG.md dist/markedit-outline.js` then commit as `Release v<version>`.
    Include any other intended changes for this release in the same or prior commits — the tag must
-   sit on top of everything the release contains.)
+   sit on top of everything the release contains. The tag must include the bundle; otherwise the
+   registry cannot use an immutable raw-GitHub URL for it.
 
 7. **Tag** the release commit: `git tag -a v<version> -m "v<version>"` (annotated tag).
 
 8. **Push** the branch and the tag: `git push origin main` and `git push origin v<version>`.
 
-9. **Publish the GitHub release with the extension attached as an asset** (this is the file the
-   Method-B updater downloads), which also advances `releases/latest` (the updater reads *latest*,
-   so an unpublished tag alone won't trigger updates):
-   `gh release create v<version> --title "v<version>" --notes "<changelog section>" dist/markedit-outline.js`
-   The trailing `dist/markedit-outline.js` uploads it as an asset named `markedit-outline.js` —
-   the exact name the updater looks for (`UPDATE_ASSET_NAME` in `src/constants.ts`); don't rename
-   it. Prefer reusing the confirmed `CHANGELOG.md` section for this version as the release notes
-   (so GitHub and the changelog match); `--generate-notes` is an acceptable fallback. Only this
-   one asset is attached — the README and CHANGELOG are read from the repo, not bundled.
+9. **Publish GitHub release notes**:
+   `gh release create v<version> --title "v<version>" --notes "<changelog section>"`.
+   Prefer reusing the confirmed `CHANGELOG.md` section for the release body so GitHub and the
+   changelog match; `--generate-notes` is an acceptable fallback. Do not attach the extension
+   bundle: MarkEdit downloads the tag-pinned raw file recorded in the official registry.
 
-10. **Verify the release exposes the asset the updater will download.** Check the API response the
-    updater actually reads (`releases/latest`) contains an asset named `markedit-outline.js`, and
-    that its download URL resolves:
+10. **Verify the tagged bundle.** Verify the registry URL and capture its
+    hash:
     ```
-    url=$(curl -sS "https://api.github.com/repos/Nigelw/MarkEdit-outline-sidebar/releases/latest" \
-      | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const a=JSON.parse(d).assets||[];const m=a.find(x=>x.name==='markedit-outline.js');console.log(m?m.browser_download_url:'MISSING')})")
-    echo "asset url: $url"
-    [ "$url" = MISSING ] || curl -sSfI "$url" | head -1
+    registry_url="https://raw.githubusercontent.com/Nigelw/MarkEdit-outline-sidebar/v<version>/dist/markedit-outline.js"
+    curl -fsSL -o /tmp/markedit-outline.js "$registry_url" && shasum -a 256 /tmp/markedit-outline.js
     ```
-    Expect a real URL and `HTTP/2 200`. `MISSING` means the asset wasn't attached (or `latest`
-    hasn't advanced yet) — the release will fail to install for Method-B users; re-check the
-    `gh release create` upload. (The API can lag a publish by a few seconds; retry once.)
+    Confirm the fetched bytes equal the committed `dist/markedit-outline.js` (for example,
+    `cmp -s /tmp/markedit-outline.js dist/markedit-outline.js`).
+
+11. **Update the official registry.** In `MarkEdit-app/extensions`, prepend a new version object
+    to this extension's `extensions/<id>.json`, using `registry_url` and the SHA-256 from step 10,
+    then open a pull request. Do not remove older version objects.
 
 ## Report back
 
 Tell the user the released version, the release URL (`gh release view v<version> --web` gives it),
-and the result of the step-10 asset check so they know the auto-updater will serve it.
+the result of the step-10 registry check, and the registry PR URL (or that it still needs to be
+opened).
 
 ## Notes & gotchas
 
-- **The repo must stay public** for the unauthenticated api.github.com / release-asset fetches the
-  updater makes.
-- **Never tag or upload without rebuilding.** The scheme relies on the uploaded `markedit-outline.js`
-  asset matching `package.json`'s version. Step 5 guards the build.
-- The version an *installed* user compares against is the one baked into their old build, so the
-  new tag simply needs to be a higher semver than the last release. Skipped/never modes are the
-  user's own `update` setting and don't affect how you cut the release.
-- To test the end-to-end update flow yourself, temporarily lower `package.json` to an older
-  version, `npm run build`, relaunch MarkEdit, and the running copy should offer the latest
-  release. Restore the real version afterward.
+- **The repo must stay public** for the unauthenticated raw-file fetches the registry makes.
+- **Never tag without rebuilding.** The registry URL's contents must match the SHA-256 recorded
+  in its entry. Step 5 guards the build.
