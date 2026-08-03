@@ -43,7 +43,7 @@ src/styles.ts        Panel CSS (theme-driven via CSS variables)
 
 ## Releases
 
-Releases are cut with the **`release` skill** (`.agents/skills/release/SKILL.md`) — run `/release` (or ask Claude Code to "cut a release"). It bumps the version, updates the `CHANGELOG.md`, rebuilds, commits the freshly built `dist/markedit-outline.js`, tags `vX.Y.Z`, pushes, and publishes a GitHub release.
+Releases are cut with the **`release` skill** (`.agents/skills/release/SKILL.md`) — run `/release` (or ask Claude Code to "cut a release"). It bumps the version, updates the `CHANGELOG.md`, rebuilds, commits the freshly built `dist/markedit-outline.js`, tags `vX.Y.Z`, pushes, and publishes a GitHub release. It does not submit to the registry.
 
 For a release to be installable from the official registry, **all of these must agree**:
 
@@ -51,7 +51,7 @@ For a release to be installable from the official registry, **all of these must 
 2. `dist/markedit-outline.js` is freshly rebuilt from that version.
 3. The `vX.Y.Z` tag contains that exact committed bundle, available at `raw.githubusercontent.com`.
 
-The repo must stay **public** for unauthenticated raw-file fetches to work. After each release, update the official registry entry with the tag-pinned raw URL and its SHA-256. The skill enforces these invariants; see its steps and gotchas for details.
+The repo must stay **public** for unauthenticated raw-file fetches to work. Submit a published release separately with the **`submit-registry` skill** (`.agents/skills/submit-registry/SKILL.md`); it reviews the registry JSON and PR body before opening a draft PR.
 
 ## License
 

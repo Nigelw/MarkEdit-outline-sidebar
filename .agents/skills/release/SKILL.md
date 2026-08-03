@@ -1,18 +1,21 @@
 ---
 name: release
-description: Cut a new release of the MarkEdit Outline Sidebar extension — bump the version, update the changelog, build, commit the bundle, tag, push, publish release notes, and update the official registry. Use when the user says "release", "cut a release", "ship a new version", or "publish v1.2.0".
+description: Cut a new release of the MarkEdit Outline Sidebar extension — bump the version, update the changelog, build, commit the bundle, tag, push, and publish GitHub release notes. Use when the user says "release", "cut a release", "ship a new version", or "publish v1.2.0". Do not submit to the official extensions registry; use the separate `submit-registry` skill for that activity.
 ---
 
 # Release the MarkEdit Outline Sidebar
 
-The official MarkEdit extension registry downloads a bundle from a raw GitHub URL pinned to
-the release tag and verifies its SHA-256. MarkEdit's Extension Manager centrally manages updates
-from that registry. So a release is installable when **all of these agree**:
+This skill publishes a GitHub release only. Registry submission is a separate activity performed
+by the `submit-registry` skill after the release is complete.
+
+The release tag must contain the freshly built bundle so a later registry submission can reference
+an immutable raw-GitHub URL:
 
 1. `package.json` `version` = the new version recorded in the registry entry.
 2. `dist/markedit-outline.js` is freshly rebuilt from that version.
 3. The `v<version>` tag contains that exact `dist/markedit-outline.js` file.
-If the bundle and tag drift, the registry rejects the release. The steps below keep them in lockstep.
+If the bundle and tag drift, a later registry submission will be rejected. The steps below keep
+them in lockstep.
 
 `dist/markedit-outline.js` is a committed release artifact. It must be committed before tagging
 so `https://raw.githubusercontent.com/Nigelw/MarkEdit-outline-sidebar/v<version>/dist/markedit-outline.js`
@@ -75,13 +78,13 @@ is immutable and usable by the registry.
 
 5. **Verify the bundle was built**:
    `test -s dist/markedit-outline.js` must succeed. If it doesn't, stop and investigate rather
-   than tagging a missing or empty registry artifact.
+   than tagging a missing or empty release artifact.
 
 6. **Commit** the release files:
    `git add package.json CHANGELOG.md dist/markedit-outline.js` then commit as `Release v<version>`.
    Include any other intended changes for this release in the same or prior commits — the tag must
-   sit on top of everything the release contains. The tag must include the bundle; otherwise the
-   registry cannot use an immutable raw-GitHub URL for it.
+   sit on top of everything the release contains. The tag must include the bundle so a later
+   registry submission can use an immutable raw-GitHub URL for it.
 
 7. **Tag** the release commit: `git tag -a v<version> -m "v<version>"` (annotated tag).
 
@@ -91,29 +94,15 @@ is immutable and usable by the registry.
    `gh release create v<version> --title "v<version>" --notes "<changelog section>"`.
    Prefer reusing the confirmed `CHANGELOG.md` section for the release body so GitHub and the
    changelog match; `--generate-notes` is an acceptable fallback. Do not attach the extension
-   bundle: MarkEdit downloads the tag-pinned raw file recorded in the official registry.
-
-10. **Verify the tagged bundle.** Verify the registry URL and capture its
-    hash:
-    ```
-    registry_url="https://raw.githubusercontent.com/Nigelw/MarkEdit-outline-sidebar/v<version>/dist/markedit-outline.js"
-    curl -fsSL -o /tmp/markedit-outline.js "$registry_url" && shasum -a 256 /tmp/markedit-outline.js
-    ```
-    Confirm the fetched bytes equal the committed `dist/markedit-outline.js` (for example,
-    `cmp -s /tmp/markedit-outline.js dist/markedit-outline.js`).
-
-11. **Update the official registry.** In `MarkEdit-app/extensions`, prepend a new version object
-    to this extension's `extensions/<id>.json`, using `registry_url` and the SHA-256 from step 10,
-    then open a pull request. Do not remove older version objects.
+   bundle: the separate `submit-registry` skill uses the tag-pinned raw file.
 
 ## Report back
 
 Tell the user the released version, the release URL (`gh release view v<version> --web` gives it),
-the result of the step-10 registry check, and the registry PR URL (or that it still needs to be
-opened).
+and that the release is ready for a separate registry submission when requested.
 
 ## Notes & gotchas
 
-- **The repo must stay public** for the unauthenticated raw-file fetches the registry makes.
-- **Never tag without rebuilding.** The registry URL's contents must match the SHA-256 recorded
-  in its entry. Step 5 guards the build.
+- **The repo must stay public** for a future registry submission to fetch the tag-pinned raw file.
+- **Never tag without rebuilding.** A later registry submission hashes the exact bytes in the tag.
+  Step 5 guards the build.
