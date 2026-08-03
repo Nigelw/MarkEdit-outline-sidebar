@@ -85,7 +85,12 @@ html.meo-push-left .cm-md-activeLine {
   border-radius: 6px;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+.meo-item-label {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .meo-item:hover {
   background: var(--meo-hover, #f0f0f0);

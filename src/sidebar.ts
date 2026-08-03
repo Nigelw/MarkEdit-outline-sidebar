@@ -44,6 +44,7 @@ export class OutlineSidebar {
   private modeObserver?: MutationObserver;
   private modeSignature = 'edit';
   private modeCheckScheduled = false;
+  private titleResizeObserver?: ResizeObserver;
 
   constructor(settings: OutlineSettings) {
     this.settings = settings;
@@ -262,11 +263,13 @@ export class OutlineSidebar {
 
     if (this.activeIndex >= 0 && this.items[this.activeIndex]) {
       this.items[this.activeIndex].classList.remove('meo-active');
+      this.updateItemTooltip(this.items[this.activeIndex]);
     }
     this.activeIndex = index;
     if (index >= 0 && this.items[index]) {
       this.items[index].classList.add('meo-active');
       this.ensureItemVisible(this.items[index]);
+      this.updateItemTooltip(this.items[index]);
     }
   }
 
@@ -484,6 +487,13 @@ export class OutlineSidebar {
     this.empty = empty;
     this.notice = notice;
     this.resizer = resizer;
+
+    this.titleResizeObserver = new ResizeObserver(() => {
+      if (this.opened) {
+        this.updateItemTooltips();
+      }
+    });
+    this.titleResizeObserver.observe(list);
   }
 
   // MARK: - Resizing
@@ -498,6 +508,7 @@ export class OutlineSidebar {
     this.width = clamped;
     this.root.style.width = `${clamped}px`;
     this.root.style.setProperty('--meo-width', `${clamped}px`);
+    this.updateItemTooltips();
     if (this.opened) {
       this.pushEditor(true);
     }
@@ -558,12 +569,45 @@ export class OutlineSidebar {
       item.className = 'meo-item';
       item.setAttribute('data-level', String(heading.level));
       item.setAttribute('data-index', String(index));
-      item.title = heading.title;
-      item.textContent = heading.title;
+      item.setAttribute('aria-label', heading.title);
+      item.setAttribute('data-full-title', heading.title);
+
+      const label = document.createElement('span');
+      label.className = 'meo-item-label';
+      label.textContent = heading.title;
+      item.appendChild(label);
+
       this.items.push(item);
       fragment.appendChild(item);
     });
     this.list.appendChild(fragment);
+    this.updateItemTooltips();
+  }
+
+  /** Show the full heading in a native tooltip only when its label is clipped. */
+  private updateItemTooltips(): void {
+    for (const item of this.items) {
+      this.updateItemTooltip(item);
+    }
+  }
+
+  private updateItemTooltip(item: HTMLElement): void {
+    const label = item.querySelector<HTMLElement>('.meo-item-label');
+    const fullTitle = item.getAttribute('data-full-title');
+    if (label === null || fullTitle === null) {
+      return;
+    }
+
+    // Restore the full text before measuring. This also makes the method safe
+    // to call after a resize or a font-weight change on the active item.
+    label.textContent = fullTitle;
+    const isTruncated = label.scrollWidth > label.clientWidth;
+    if (isTruncated) {
+      truncateMiddle(label, fullTitle);
+      item.title = fullTitle;
+    } else {
+      item.removeAttribute('title');
+    }
   }
 
   private onListClick(event: MouseEvent): void {
@@ -699,6 +743,35 @@ export class OutlineSidebar {
       dark ? 'rgba(255, 214, 92, 0.60)' : 'rgba(255, 209, 71, 0.60)',
     );
   }
+}
+
+/** Replace the middle of an overflowing label with a single ellipsis. */
+function truncateMiddle(label: HTMLElement, fullTitle: string): void {
+  const characters = Array.from(fullTitle);
+  let low = 0;
+  let high = Math.max(0, characters.length - 1);
+  let best = '…';
+
+  while (low <= high) {
+    const retained = Math.floor((low + high) / 2);
+    const candidate = middleText(characters, retained);
+    label.textContent = candidate;
+
+    if (label.scrollWidth <= label.clientWidth) {
+      best = candidate;
+      low = retained + 1;
+    } else {
+      high = retained - 1;
+    }
+  }
+
+  label.textContent = best;
+}
+
+function middleText(characters: string[], retained: number): string {
+  const startCount = Math.ceil(retained / 2);
+  const endCount = retained - startCount;
+  return `${characters.slice(0, startCount).join('')}…${endCount > 0 ? characters.slice(-endCount).join('') : ''}`;
 }
 
 function readStoredWidth(): number | undefined {
