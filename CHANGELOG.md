@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1 (2026-08-06)
+
+### Improved
+
+- Long outline titles now use middle truncation.
+- Tooltips now only appear for outline titles that are truncated.
+
 ## 1.3.0 (2026-07-31)
 
 ### Improved
