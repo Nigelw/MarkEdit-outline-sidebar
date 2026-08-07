@@ -21,7 +21,10 @@ MarkEdit.addExtension(
       if (rebuildTimer !== undefined) {
         clearTimeout(rebuildTimer);
       }
-      rebuildTimer = setTimeout(() => sidebar.refresh(), 250);
+      rebuildTimer = setTimeout(() => {
+        rebuildTimer = undefined;
+        sidebar.refresh();
+      }, 250);
     } else if (update.selectionSet) {
       sidebar.onSelectionChange();
     }
@@ -29,10 +32,26 @@ MarkEdit.addExtension(
 );
 
 let started = false;
-function start(): void {
-  if (started) {
+let readyEditor: EditorView | undefined;
+function start(editor: EditorView): void {
+  if (readyEditor === editor) {
     return;
   }
+  readyEditor = editor;
+
+  // A document reload replaces the EditorView without dispatching a docChanged
+  // transaction on the old view. Discard that document's pending refresh and
+  // rebuild from the replacement view when the sidebar is open.
+  if (rebuildTimer !== undefined) {
+    clearTimeout(rebuildTimer);
+    rebuildTimer = undefined;
+  }
+
+  if (started) {
+    sidebar.refresh();
+    return;
+  }
+
   started = true;
   sidebar.mount();
   if (sidebar.shouldStartOpen()) {
@@ -40,13 +59,13 @@ function start(): void {
   }
 }
 
-MarkEdit.onEditorReady(() => start());
+MarkEdit.onEditorReady((editor) => start(editor));
 
 // If the editor is already initialized when this script loads, start immediately
 // (onEditorReady may not fire again for an already-ready editor).
 try {
   if (MarkEdit.editorView !== undefined) {
-    start();
+    start(MarkEdit.editorView);
   }
 } catch {
   // editorView not ready yet; onEditorReady will handle it.
