@@ -1,4 +1,0 @@
-interface:
-  display_name: "Submit Registry Release"
-  short_description: "Submit latest release to registry"
-  default_prompt: "Use $submit-registry to submit the latest release to MarkEdit’s official extension registry."
