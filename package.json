@@ -1,7 +1,11 @@
 {
-  "name": "markedit-outline",
+  "name": "markedit-outline-sidebar",
   "version": "1.3.2",
   "description": "A table-of-contents / outline sidebar for MarkEdit, usable in both edit and preview modes.",
+  "markeditRegistry": {
+    "id": "outline-sidebar",
+    "name": "Outline Sidebar"
+  },
   "license": "MIT",
   "scripts": {
     "build": "vite build",
