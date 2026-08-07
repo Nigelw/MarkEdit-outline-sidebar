@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2 (2026-08-07)
+
+### Improved
+
+- The outline now refreshes when an open document is updated outside MarkEdit.
+
 ## 1.3.1 (2026-08-06)
 
 ### Improved
